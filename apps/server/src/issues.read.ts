@@ -3,7 +3,8 @@ import {
   type IssueDetail,
   issueDetailSchema,
   type IssueFilters,
-  issueSchema
+  issueSchema,
+  type IssueView
 } from '@beadle/protocol'
 
 import { runBdJson } from './bd.ts'
@@ -117,4 +118,20 @@ export function isBlocked(
 
 export function indexById(issues: readonly Issue[]): Map<string, Issue> {
   return new Map(issues.map((issue) => [issue.id, issue]))
+}
+
+/**
+ * Задача в том виде, в каком её ждёт экран. Оба добавленных поля выводятся
+ * из целого набора, поэтому считаются здесь, до отбора: после отбора
+ * ни блокирующей задачи, ни родителя в наборе может уже не быть.
+ */
+export function toView(
+  issue: Issue,
+  byId: ReadonlyMap<string, Issue>
+): IssueView {
+  return {
+    ...issue,
+    blocked: isBlocked(issue, byId),
+    parent_title: issue.parent ? byId.get(issue.parent)?.title : undefined
+  }
 }

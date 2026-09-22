@@ -9,9 +9,9 @@ import { BdError } from './bd.ts'
 import {
   applyFilters,
   indexById,
-  isBlocked,
   readIssue,
-  readIssues
+  readIssues,
+  toView
 } from './issues.read.ts'
 import { findWorkspace, listWorkspaces } from './workspaces.ts'
 
@@ -90,10 +90,7 @@ export function createApp() {
 
       return c.json({
         workspace,
-        issues: filtered.map((issue) => ({
-          ...issue,
-          blocked: isBlocked(issue, byId)
-        }))
+        issues: filtered.map((issue) => toView(issue, byId))
       })
     } catch (error) {
       if (error instanceof BdError) {

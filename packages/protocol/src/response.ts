@@ -9,11 +9,15 @@ import { workspaceSchema } from './workspace.ts'
  */
 
 /**
- * `blocked` в базе нет — он выводится из графа зависимостей на сервере.
- * Поэтому задача в ответе шире задачи в базе, и это разные схемы.
+ * Задача в ответе шире задачи в базе: два поля выводятся из целого набора,
+ * а не хранятся. `blocked` считается по графу зависимостей, `parent_title`
+ * берётся у родителя. Оба нужны экрану, и оба может дать только тот, у кого
+ * набор есть целиком: под фильтром родителя в ответе может не оказаться,
+ * а показывать заголовок группы номером — значит не показывать ничего.
  */
 export const issueViewSchema = issueSchema.extend({
-  blocked: z.boolean()
+  blocked: z.boolean(),
+  parent_title: z.string().optional()
 })
 
 export const issuesResponseSchema = z.object({
