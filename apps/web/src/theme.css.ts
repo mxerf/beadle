@@ -100,6 +100,23 @@ export const press = {
   }
 } as const
 
+/**
+ * Подъём под курсором: строка или карточка вырастает пружиной, ложится
+ * поверх соседних и отбрасывает тень. Основной отклик на наведение во всех
+ * видах — тон подложки при этом не меняется, чтобы значение цвета осталось
+ * за самим значением.
+ */
+export const lift = {
+  transition: `scale ${vars.motion.spring} ${vars.motion.springEase}, box-shadow ${vars.motion.quick} ease`,
+  selectors: {
+    '&:hover': {
+      zIndex: 1,
+      scale: '1.014',
+      boxShadow: vars.shadow.raise
+    }
+  }
+} as const
+
 /** Кольцо фокуса с клавиатуры — одно на все интерактивные элементы. */
 export const focusRing = {
   outline: 'none',

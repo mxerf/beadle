@@ -5,6 +5,8 @@ import {
   issueTypeSchema
 } from '@beadle/protocol'
 
+import type { TagTone } from './tag.css.ts'
+
 /**
  * Подписи к значениям контракта. Списки берутся из схем, а не переписываются
  * руками: новый статус в beads должен проявиться в фильтрах сам, а не через
@@ -69,4 +71,22 @@ export const failureCaption: Record<string, string> = {
   bad_filters: 'Фильтр в ссылке не распознан',
   bd_failed: 'bd не ответил',
   workspace_not_found: 'Такого проекта нет в реестре'
+}
+
+/**
+ * Тон тега по значению. Живёт рядом с подписями, а не в стилях: это решение
+ * о смысле («P0 — тревога, закрытая задача — успех»), а не о цвете.
+ */
+export const statusTone: Record<IssueStatus, TagTone> = {
+  open: 'info',
+  in_progress: 'warning',
+  deferred: 'neutral',
+  closed: 'brand'
+}
+
+export function priorityTone(priority: number): TagTone {
+  if (priority === 0) {
+    return 'danger'
+  }
+  return priority === 1 ? 'warning' : 'neutral'
 }
