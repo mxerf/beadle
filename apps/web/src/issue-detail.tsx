@@ -11,6 +11,7 @@ import {
   statusTone,
   typeCaption
 } from './captions.ts'
+import { CopyId } from './copy-id.tsx'
 import * as styles from './issue-detail.css.ts'
 import { Markdown } from './markdown.tsx'
 import * as tag from './tag.css.ts'
@@ -48,7 +49,7 @@ export function IssueDetail({
   return (
     <>
       <header className={styles.head}>
-        <div className={styles.number}>{issue.id}</div>
+        <CopyId id={issue.id} />
         <h1 className={styles.title}>{issue.title}</h1>
         <div className={styles.tags}>
           <span className={tag.tone[priorityTone(issue.priority)]}>

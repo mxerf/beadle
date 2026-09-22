@@ -10,6 +10,7 @@ import {
   statusCaption,
   typeCaption
 } from './captions.ts'
+import { CopyId } from './copy-id.tsx'
 import * as styles from './issue-board.css.ts'
 import { IssueRoute } from './issue-link.tsx'
 import { byImportance } from './ordering.ts'
@@ -62,23 +63,27 @@ function Column({
 
 function IssueCard({ issue }: { issue: IssueView }) {
   return (
-    <IssueRoute id={issue.id} className={styles.card}>
-      <div className={styles.cardHead}>
-        <span className={tag.tone[priorityTone(issue.priority)]}>
-          {priorityCaption(issue.priority)}
-        </span>
-        <span className={tag.tone.quiet}>{typeCaption[issue.issue_type]}</span>
-        {issue.blocked ? (
-          <span className={tag.tone.danger}>заблокирована</span>
-        ) : null}
-      </div>
-      <div className={styles.title} title={issue.title}>
-        {issue.title}
-      </div>
+    <div className={styles.card}>
+      <IssueRoute id={issue.id} className={styles.cardLink}>
+        <div className={styles.cardHead}>
+          <span className={tag.tone[priorityTone(issue.priority)]}>
+            {priorityCaption(issue.priority)}
+          </span>
+          <span className={tag.tone.quiet}>
+            {typeCaption[issue.issue_type]}
+          </span>
+          {issue.blocked ? (
+            <span className={tag.tone.danger}>заблокирована</span>
+          ) : null}
+        </div>
+        <div className={styles.title} title={issue.title}>
+          {issue.title}
+        </div>
+      </IssueRoute>
       <div className={styles.foot}>
-        <span className={styles.id}>{issue.id}</span>
+        <CopyId id={issue.id} />
         {issue.assignee ? <span>{issue.assignee}</span> : null}
       </div>
-    </IssueRoute>
+    </div>
   )
 }

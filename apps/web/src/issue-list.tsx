@@ -8,6 +8,7 @@ import {
   statusTone,
   typeCaption
 } from './captions.ts'
+import { CopyId } from './copy-id.tsx'
 import { type Grouping, groupIssues, type IssueGroup } from './grouping.ts'
 import { IssueRoute } from './issue-link.tsx'
 import * as styles from './issue-list.css.ts'
@@ -72,31 +73,33 @@ function GroupHead({ group }: { group: IssueGroup }) {
 
 function IssueRow({ issue }: { issue: IssueView }) {
   return (
-    <IssueRoute id={issue.id} className={styles.row}>
-      <span className={tag.tone[priorityTone(issue.priority)]}>
-        {priorityCaption(issue.priority)}
-      </span>
-      <span className={tag.tone.quiet}>{typeCaption[issue.issue_type]}</span>
-      <span
-        className={
-          issue.status === 'closed'
-            ? `${styles.title} ${styles.closed}`
-            : styles.title
-        }
-        title={issue.title}
-      >
-        {issue.title}
-      </span>
-      <span className={styles.assignee}>{issue.assignee ?? ''}</span>
-      <span>
-        {issue.blocked ? (
-          <span className={tag.tone.danger}>заблокирована</span>
-        ) : null}
-      </span>
-      <span className={tag.tone[statusTone[issue.status]]}>
-        {statusCaption[issue.status]}
-      </span>
-      <span className={styles.id}>{issue.id}</span>
-    </IssueRoute>
+    <div className={styles.row}>
+      <IssueRoute id={issue.id} className={styles.rowLink}>
+        <span className={tag.tone[priorityTone(issue.priority)]}>
+          {priorityCaption(issue.priority)}
+        </span>
+        <span className={tag.tone.quiet}>{typeCaption[issue.issue_type]}</span>
+        <span
+          className={
+            issue.status === 'closed'
+              ? `${styles.title} ${styles.closed}`
+              : styles.title
+          }
+          title={issue.title}
+        >
+          {issue.title}
+        </span>
+        <span className={styles.assignee}>{issue.assignee ?? ''}</span>
+        <span>
+          {issue.blocked ? (
+            <span className={tag.tone.danger}>заблокирована</span>
+          ) : null}
+        </span>
+        <span className={tag.tone[statusTone[issue.status]]}>
+          {statusCaption[issue.status]}
+        </span>
+      </IssueRoute>
+      <CopyId id={issue.id} className={styles.idCell} />
+    </div>
   )
 }

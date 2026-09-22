@@ -32,7 +32,6 @@ export const list = style({
 /** Наведение не красит строку, а поднимает её над соседними. */
 export const row = style([
   lift,
-  focusRing,
   {
     position: 'relative',
     display: 'grid',
@@ -50,12 +49,25 @@ export const row = style([
   }
 ])
 
-export const id = style({
-  justifySelf: 'end',
-  fontFamily: vars.font.mono,
-  fontSize: vars.text.sm,
-  color: vars.color.faint
-})
+/**
+ * Ссылка занимает строку целиком, кроме последней колонки: там номер,
+ * и он кнопка. Колонки — та же подсетка, поэтому ячейки остаются на своих
+ * местах; собственных полей у ссылки нет, иначе они сдвинули бы дорожки.
+ */
+export const rowLink = style([
+  focusRing,
+  {
+    display: 'grid',
+    gridColumn: '1 / -2',
+    gridTemplateColumns: 'subgrid',
+    alignItems: 'center',
+    gap: vars.space[3],
+    borderRadius: vars.radius.md
+  }
+])
+
+/** Номер прижат к правому краю строки — как и был, пока был подписью. */
+export const idCell = style({ justifySelf: 'end' })
 
 export const title = style({
   minWidth: 0,

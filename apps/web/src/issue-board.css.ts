@@ -57,7 +57,6 @@ export const stack = style({
 
 export const card = style([
   lift,
-  focusRing,
   {
     position: 'relative',
     display: 'flex',
@@ -66,6 +65,20 @@ export const card = style([
     padding: `${vars.space[3]} ${vars.space[3]}`,
     borderRadius: vars.radius.md,
     background: vars.color.card
+  }
+])
+
+/**
+ * Ссылка — всё, кроме подвала: в подвале номер, и он кнопка, а кнопку
+ * в ссылку не вложить.
+ */
+export const cardLink = style([
+  focusRing,
+  {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: vars.space[2],
+    borderRadius: vars.radius.md
   }
 ])
 
@@ -93,8 +106,6 @@ export const foot = style({
   fontSize: vars.text.xs,
   color: vars.color.faint
 })
-
-export const id = style({ fontFamily: vars.font.mono })
 
 export const empty = style({
   padding: `${vars.space[3]} ${vars.space[2]}`,

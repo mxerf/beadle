@@ -17,7 +17,6 @@ export const group = style({
 /** Заголовок группы — тоже ссылка: у эпика своя страница. */
 export const head = style([
   lift,
-  focusRing,
   {
     position: 'relative',
     display: 'flex',
@@ -26,6 +25,22 @@ export const head = style([
     padding: `${vars.space[1]} ${vars.space[2]} ${vars.space[2]}`,
     borderRadius: vars.radius.md,
     background: vars.color.card
+  }
+])
+
+/**
+ * Ссылка занимает строку, кроме номера: номер — кнопка, а кнопку в ссылку
+ * не вложить. То же и в ветке ниже.
+ */
+export const rowLink = style([
+  focusRing,
+  {
+    display: 'flex',
+    flex: 1,
+    minWidth: 0,
+    alignItems: 'center',
+    gap: vars.space[3],
+    borderRadius: vars.radius.md
   }
 ])
 
@@ -67,7 +82,6 @@ export const barFill = style({
 
 export const branch = style([
   lift,
-  focusRing,
   {
     position: 'relative',
     display: 'flex',
@@ -90,12 +104,6 @@ export const title = style({
 
 /** Задача, оставленная как путь к детям: она сама под фильтр не попала. */
 export const context = style({ color: vars.color.faint })
-
-export const id = style({
-  fontFamily: vars.font.mono,
-  fontSize: vars.text.sm,
-  color: vars.color.faint
-})
 
 /** Отступ вложенности — волоском, а не пустотой: видно, где чья ветка. */
 export const nested = style({

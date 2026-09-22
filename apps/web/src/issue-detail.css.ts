@@ -23,12 +23,6 @@ export const back = style([
 
 export const head = style({ marginBottom: vars.space[4] })
 
-export const number = style({
-  fontFamily: vars.font.mono,
-  fontSize: vars.text.sm,
-  color: vars.color.faint
-})
-
 export const title = style({
   margin: `${vars.space[1]} 0 ${vars.space[3]}`,
   fontSize: vars.text.xl,
