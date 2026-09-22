@@ -56,6 +56,12 @@ describe('toQueryString', () => {
   it('сохраняет запятые в списках читаемыми', () => {
     expect(toQueryString({ priority: '0,1' })).toBe('priority=0%2C1')
   })
+
+  // Молчаливая штука: если показ утечёт в запрос, ключ кеша поедет вместе
+  // с ним, и каждая перегруппировка станет новым походом к `bd`.
+  it('не пускает в запрос то, что относится к показу, а не к отбору', () => {
+    expect(toQueryString({ status: 'open', group: 'epic' })).toBe('status=open')
+  })
 })
 
 describe('issueSearchSchema', () => {

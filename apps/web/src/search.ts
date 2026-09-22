@@ -17,7 +17,8 @@ const fromUrl = z
   .transform(String)
   .optional()
 
-export const issueSearchSchema = z.object({
+/** Отбор: эта часть адреса уезжает на сервер и попадает в ключ кеша. */
+export const issueFilterSearchSchema = z.object({
   status: fromUrl,
   type: fromUrl,
   priority: fromUrl,
@@ -25,6 +26,17 @@ export const issueSearchSchema = z.object({
   assignee: fromUrl,
   parent: fromUrl,
   search: fromUrl
+})
+
+/**
+ * Весь адрес вида: к отбору добавлено то, как его разложить. Показ живёт
+ * в адресе на тех же правах, что и фильтры, — ссылка должна открываться
+ * ровно тем экраном, с которого её дали, — но на сервер он не едет:
+ * от перегруппировки набор задач не меняется, а значит и спрашивать `bd`
+ * заново не о чем.
+ */
+export const issueSearchSchema = issueFilterSearchSchema.extend({
+  group: fromUrl
 })
 
 export type IssueSearch = z.infer<typeof issueSearchSchema>
@@ -48,9 +60,16 @@ export function toggleValue(
   return next.length > 0 ? next.join(',') : undefined
 }
 
+/**
+ * Запрос к серверу. Что относится к отбору, перечислено один раз — в схеме
+ * фильтров, и лишнее отсекает она сама: новый параметр показа не просочится
+ * в запрос и не разорвёт кеш только потому, что про него забыли здесь.
+ */
 export function toQueryString(search: IssueSearch): string {
   const params = new URLSearchParams()
-  for (const [key, value] of Object.entries(search)) {
+  for (const [key, value] of Object.entries(
+    issueFilterSearchSchema.parse(search)
+  )) {
     if (value) {
       params.set(key, value)
     }

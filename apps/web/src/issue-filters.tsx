@@ -8,6 +8,7 @@ import {
   TYPES,
   typeCaption
 } from './captions.ts'
+import { chip } from './chip.css.ts'
 import * as styles from './issue-filters.css.ts'
 import { type IssueSearch, toggleValue, toValues } from './search.ts'
 
@@ -83,7 +84,7 @@ function Group({
         <button
           key={value}
           type="button"
-          className={styles.chip[values.includes(value) ? 'on' : 'off']}
+          className={chip[values.includes(value) ? 'on' : 'off']}
           aria-pressed={values.includes(value)}
           onClick={() => onToggle(value)}
         >

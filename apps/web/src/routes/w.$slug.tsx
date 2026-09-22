@@ -43,8 +43,13 @@ function WorkspaceLayout() {
     [navigate]
   )
 
+  // Сброс убирает отбор, но не раскладку: группировка — про то, как
+  // смотреть, и к фильтрам, которые человек сбрасывает, отношения не имеет.
   const reset = useCallback(() => {
-    void navigate({ search: {}, replace: true })
+    void navigate({
+      search: (previous) => ({ group: previous.group }),
+      replace: true
+    })
   }, [navigate])
 
   const name = data?.workspace.name ?? slug
