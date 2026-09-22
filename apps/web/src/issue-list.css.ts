@@ -3,21 +3,24 @@ import { style } from '@vanilla-extract/css'
 import { lift, vars } from './theme.css.ts'
 
 /**
- * Одна плотная карточка на весь список: рамок нет, строки делит волосок.
+ * Одна плотная карточка на весь список — как группа в эпиках: разделителей
+ * нет, строки различаются подъёмом под курсором. Поля карточки дают строке
+ * место вырасти, не вылезая за её край.
+ *
  * Колонки объявлены здесь, а строки берут их через `subgrid`: иначе каждая
  * строка меряет ширину сама, и статусы с номерами пляшут по вертикали.
  */
 export const list = style({
   display: 'grid',
   gridTemplateColumns: 'auto auto minmax(0, 1fr) auto auto auto auto',
+  // Поля те же, что у группы в эпиках: подъём строки со своей тенью должен
+  // уместиться внутри карточки, а не свисать с её края.
+  padding: `${vars.space[2]} ${vars.space[4]}`,
   borderRadius: vars.radius.lg,
   background: vars.color.card
 })
 
-/**
- * Наведение не красит строку, а поднимает её. Разделитель живёт
- * в псевдоэлементе, потому что тень строки занята подъёмом.
- */
+/** Наведение не красит строку, а поднимает её над соседними. */
 export const row = style([
   lift,
   {
@@ -27,23 +30,13 @@ export const row = style([
     gridTemplateColumns: 'subgrid',
     alignItems: 'center',
     gap: vars.space[3],
-    padding: `${vars.space[2]} ${vars.space[4]}`,
+    // Список разрежен против ветки в эпиках: там строка — часть группы
+    // и жмётся к соседям, здесь она сама по себе и просит воздуха.
+    padding: `${vars.space[2]} ${vars.space[2]}`,
     borderRadius: vars.radius.md,
-    selectors: {
-      '&::after': {
-        content: '""',
-        position: 'absolute',
-        insetInline: vars.space[4],
-        bottom: 0,
-        height: '1px',
-        background: vars.color.line
-      },
-      '&:last-child::after': { content: 'none' },
-      '&:hover::after': { background: 'transparent' },
-      // Подложка поднятой строки обязана быть плотной: иначе сквозь неё
-      // просвечивает разделитель соседней.
-      '&:hover': { background: vars.color.card }
-    }
+    // Подложка поднятой строки обязана быть плотной: сквозь прозрачную
+    // просвечивают соседние.
+    selectors: { '&:hover': { background: vars.color.card } }
   }
 ])
 
