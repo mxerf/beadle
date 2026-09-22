@@ -1,7 +1,7 @@
 import type { Dependency, Issue } from '@beadle/protocol'
 import { describe, expect, it } from 'vitest'
 
-import { applyFilters, indexById, toView } from './issues.read.ts'
+import { applyFilters, indexById, isIssueId, toView } from './issues.read.ts'
 
 function issue(id: string, extra: Partial<Issue> = {}): Issue {
   return {
@@ -89,5 +89,26 @@ describe('toView', () => {
       toView(held, indexById([held, issue('t2', { status: 'closed' })]))
         .blocked_by
     ).toEqual([])
+  })
+})
+
+describe('isIssueId', () => {
+  it('пропускает номера, какими их выдаёт beads', () => {
+    expect(isIssueId('pif-nzq')).toBe(true)
+    expect(isIssueId('pif-nzq.63')).toBe(true)
+    expect(isIssueId('bd_1')).toBe(true)
+  })
+
+  /*
+   * Оболочки в вызове `bd` нет, командой такое не станет. Но аргументом —
+   * станет: номер, начинающийся с дефиса, `bd` прочтёт как флаг, и
+   * `--db=/чужой/путь` увёл бы его в другую базу.
+   */
+  it('не пускает то, что bd примет за флаг или путь', () => {
+    expect(isIssueId('--db=/чужой/путь')).toBe(false)
+    expect(isIssueId('-h')).toBe(false)
+    expect(isIssueId('../secret')).toBe(false)
+    expect(isIssueId('')).toBe(false)
+    expect(isIssueId('pif nzq')).toBe(false)
   })
 })

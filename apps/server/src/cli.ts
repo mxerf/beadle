@@ -1,3 +1,5 @@
+import { networkInterfaces } from 'node:os'
+
 import { serve } from '@hono/node-server'
 
 import { createApp, type WebHandler } from './app.ts'
@@ -28,6 +30,24 @@ function readHost(argv: readonly string[]): string {
   return fromFlag ?? process.env['HOST'] ?? '127.0.0.1'
 }
 
+/**
+ * Слушать только себя — умолчание не из осторожности вообще, а по делу:
+ * пароля у читалки нет, а показывает она все задачи всех проектов реестра
+ * и пути к ним на диске. В кафе и коворкинге этого достаточно, чтобы отдать
+ * рабочую переписку соседям по сети.
+ */
+function isLoopback(host: string): boolean {
+  return host === '127.0.0.1' || host === 'localhost' || host === '::1'
+}
+
+/** Адреса машины в сети: их набирают на телефоне руками, `0.0.0.0` не набрать. */
+function lanAddresses(): string[] {
+  return Object.values(networkInterfaces())
+    .flatMap((list) => list ?? [])
+    .filter((item) => item.family === 'IPv4' && !item.internal)
+    .map((item) => item.address)
+}
+
 export function main(argv: readonly string[], web?: WebHandler): void {
   const command = argv[0]
 
@@ -55,7 +75,17 @@ export function main(argv: readonly string[], web?: WebHandler): void {
   const hostname = readHost(argv)
 
   serve({ fetch: createApp(web).fetch, port, hostname }, (info) => {
-    console.log(`beadle   http://${hostname}:${info.port}`)
-    console.log(`проектов ${listWorkspaces().length}`)
+    console.log(`beadle    http://${hostname}:${info.port}`)
+
+    if (!isLoopback(hostname)) {
+      for (const address of lanAddresses()) {
+        console.log(`с телефона http://${address}:${info.port}`)
+      }
+      console.log(
+        'внимание  сеть видит всё: пароля нет, открыты задачи всех проектов реестра и пути к ним'
+      )
+    }
+
+    console.log(`проектов  ${listWorkspaces().length}`)
   })
 }

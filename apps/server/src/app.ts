@@ -11,6 +11,7 @@ import { fingerprint, type LiveSetup, readLiveSetup } from './changes.ts'
 import {
   applyFilters,
   indexById,
+  isIssueId,
   readIssue,
   readIssues,
   toView
@@ -186,8 +187,13 @@ export function createApp(web?: WebHandler) {
       return c.json({ error: 'workspace_not_found' }, 404)
     }
 
+    const id = c.req.param('id')
+    if (!isIssueId(id)) {
+      return c.json({ error: 'bad_issue_id' }, 400)
+    }
+
     try {
-      const issue = await readIssue(workspace.path, c.req.param('id'))
+      const issue = await readIssue(workspace.path, id)
       if (!issue) {
         return c.json({ error: 'issue_not_found' }, 404)
       }

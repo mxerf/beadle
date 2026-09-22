@@ -71,7 +71,8 @@ export const failureCaption: Record<string, string> = {
   bad_filters: 'Фильтр в ссылке не распознан',
   bd_failed: 'bd не ответил',
   workspace_not_found: 'Такого проекта нет в реестре',
-  issue_not_found: 'Такой задачи в проекте нет'
+  issue_not_found: 'Такой задачи в проекте нет',
+  bad_issue_id: 'Это не похоже на номер задачи'
 }
 
 /**
