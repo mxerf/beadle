@@ -14,6 +14,7 @@ import { Route as WSlugRouteImport } from './routes/w.$slug'
 import { Route as WSlugIndexRouteImport } from './routes/w.$slug.index'
 import { Route as WSlugBoardRouteImport } from './routes/w.$slug.board'
 import { Route as WSlugEpicsRouteImport } from './routes/w.$slug.epics'
+import { Route as WSlugGraphRouteImport } from './routes/w.$slug.graph'
 import { Route as WSlugIssueIdRouteImport } from './routes/w.$slug_.issue.$id'
 
 const IndexRoute = IndexRouteImport.update({
@@ -41,6 +42,11 @@ const WSlugEpicsRoute = WSlugEpicsRouteImport.update({
   path: '/epics',
   getParentRoute: () => WSlugRoute,
 } as any)
+const WSlugGraphRoute = WSlugGraphRouteImport.update({
+  id: '/graph',
+  path: '/graph',
+  getParentRoute: () => WSlugRoute,
+} as any)
 const WSlugIssueIdRoute = WSlugIssueIdRouteImport.update({
   id: '/w/$slug_/issue/$id',
   path: '/w/$slug/issue/$id',
@@ -52,6 +58,7 @@ export interface FileRoutesByFullPath {
   '/w/$slug': typeof WSlugRouteWithChildren
   '/w/$slug/board': typeof WSlugBoardRoute
   '/w/$slug/epics': typeof WSlugEpicsRoute
+  '/w/$slug/graph': typeof WSlugGraphRoute
   '/w/$slug/': typeof WSlugIndexRoute
   '/w/$slug/issue/$id': typeof WSlugIssueIdRoute
 }
@@ -59,6 +66,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/w/$slug/board': typeof WSlugBoardRoute
   '/w/$slug/epics': typeof WSlugEpicsRoute
+  '/w/$slug/graph': typeof WSlugGraphRoute
   '/w/$slug': typeof WSlugIndexRoute
   '/w/$slug/issue/$id': typeof WSlugIssueIdRoute
 }
@@ -68,6 +76,7 @@ export interface FileRoutesById {
   '/w/$slug': typeof WSlugRouteWithChildren
   '/w/$slug/board': typeof WSlugBoardRoute
   '/w/$slug/epics': typeof WSlugEpicsRoute
+  '/w/$slug/graph': typeof WSlugGraphRoute
   '/w/$slug/': typeof WSlugIndexRoute
   '/w/$slug_/issue/$id': typeof WSlugIssueIdRoute
 }
@@ -78,6 +87,7 @@ export interface FileRouteTypes {
     | '/w/$slug'
     | '/w/$slug/board'
     | '/w/$slug/epics'
+    | '/w/$slug/graph'
     | '/w/$slug/'
     | '/w/$slug/issue/$id'
   fileRoutesByTo: FileRoutesByTo
@@ -85,6 +95,7 @@ export interface FileRouteTypes {
     | '/'
     | '/w/$slug/board'
     | '/w/$slug/epics'
+    | '/w/$slug/graph'
     | '/w/$slug'
     | '/w/$slug/issue/$id'
   id:
@@ -93,6 +104,7 @@ export interface FileRouteTypes {
     | '/w/$slug'
     | '/w/$slug/board'
     | '/w/$slug/epics'
+    | '/w/$slug/graph'
     | '/w/$slug/'
     | '/w/$slug_/issue/$id'
   fileRoutesById: FileRoutesById
@@ -140,6 +152,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WSlugEpicsRouteImport
       parentRoute: typeof WSlugRoute
     }
+    '/w/$slug/graph': {
+      id: '/w/$slug/graph'
+      path: '/graph'
+      fullPath: '/w/$slug/graph'
+      preLoaderRoute: typeof WSlugGraphRouteImport
+      parentRoute: typeof WSlugRoute
+    }
     '/w/$slug_/issue/$id': {
       id: '/w/$slug_/issue/$id'
       path: '/w/$slug/issue/$id'
@@ -153,12 +172,14 @@ declare module '@tanstack/react-router' {
 interface WSlugRouteChildren {
   WSlugBoardRoute: typeof WSlugBoardRoute
   WSlugEpicsRoute: typeof WSlugEpicsRoute
+  WSlugGraphRoute: typeof WSlugGraphRoute
   WSlugIndexRoute: typeof WSlugIndexRoute
 }
 
 const WSlugRouteChildren: WSlugRouteChildren = {
   WSlugBoardRoute: WSlugBoardRoute,
   WSlugEpicsRoute: WSlugEpicsRoute,
+  WSlugGraphRoute: WSlugGraphRoute,
   WSlugIndexRoute: WSlugIndexRoute,
 }
 

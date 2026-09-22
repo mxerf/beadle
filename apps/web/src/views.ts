@@ -7,7 +7,8 @@ import { useMatchRoute } from '@tanstack/react-router'
 export const VIEWS = [
   { to: '/w/$slug', caption: 'Список' },
   { to: '/w/$slug/board', caption: 'Доска' },
-  { to: '/w/$slug/epics', caption: 'Эпики' }
+  { to: '/w/$slug/epics', caption: 'Эпики' },
+  { to: '/w/$slug/graph', caption: 'Связи' }
 ] as const
 
 /**

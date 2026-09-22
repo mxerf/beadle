@@ -11,10 +11,13 @@ import { WORKSPACE_ROUTE } from './issues-pane.tsx'
 export function IssueRoute({
   id,
   className,
+  title,
   children
 }: {
   id: string
   className: string
+  /** Подсказка при наведении: там, где в строке для пояснения нет места. */
+  title?: string | undefined
   children: ReactNode
 }) {
   const { slug } = useParams({ from: WORKSPACE_ROUTE })
@@ -26,6 +29,7 @@ export function IssueRoute({
       params={{ slug, id }}
       search={search}
       className={className}
+      title={title}
     >
       {children}
     </Link>
