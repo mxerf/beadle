@@ -72,7 +72,13 @@ const POLL_MS = 1000
 /** Молчание дольше этого посредники принимают за обрыв. */
 const HEARTBEAT_MS = 25_000
 
-export function createApp() {
+/**
+ * Отдаёт собранный фронт по пути в адресе. В разработке его нет: страницы
+ * раздаёт vite. В одном бинаре — есть, и лежит он внутри самого файла.
+ */
+export type WebHandler = (pathname: string) => Response | undefined
+
+export function createApp(web?: WebHandler) {
   const app = new Hono()
 
   app.get('/health', (c) => c.json({ ok: true }))
@@ -193,6 +199,25 @@ export function createApp() {
       throw error
     }
   })
+
+  if (web) {
+    /*
+     * Всё, что не разобрал API, — это страница, и разбирать её будет
+     * браузер: адрес здесь описывает экран целиком, поэтому по прямой
+     * ссылке на доску сервер обязан отдать приложение, а не 404.
+     *
+     * Кроме самого API: непопадание в его маршрут — ошибка запроса,
+     * и отвечать на неё страницей значит прятать её от того, кто
+     * ошибся адресом.
+     */
+    app.get('*', (c) => {
+      const { pathname } = new URL(c.req.url)
+      if (pathname.startsWith('/api/')) {
+        return c.notFound()
+      }
+      return web(pathname) ?? c.notFound()
+    })
+  }
 
   return app
 }

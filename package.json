@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "turbo run dev",
     "build": "turbo run build",
+    "binary": "pnpm --filter @beadle/web build && bun scripts/build-binary.ts",
     "check-types": "turbo run check-types",
     "test": "turbo run test",
     "lint": "oxlint",
