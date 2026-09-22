@@ -44,7 +44,8 @@ apps/web/        Vite + React + TanStack Router, стили на vanilla-extract
 packages/protocol/  Zod-схемы, выведенные из живого вывода bd list --json
 ```
 
-Правила работы — `CLAUDE.md`. Наблюдения по каркасу `../mxerf-claude` — `docs/canon-notes.md`.
+Правила работы — `CLAUDE.md`. Что менялось — `CHANGELOG.md`. Наблюдения
+по каркасу `../mxerf-claude` — `docs/canon-notes.md`.
 
 ## Что дальше
 

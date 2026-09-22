@@ -3,6 +3,7 @@ import { networkInterfaces } from 'node:os'
 import { serve } from '@hono/node-server'
 
 import { createApp, type WebHandler } from './app.ts'
+import { VERSION } from './version.ts'
 import { addWorkspace, hasBeadsDatabase, listWorkspaces } from './workspaces.ts'
 
 /**
@@ -51,6 +52,11 @@ function lanAddresses(): string[] {
 export function main(argv: readonly string[], web?: WebHandler): void {
   const command = argv[0]
 
+  if (command === '--version' || command === 'version') {
+    console.log(VERSION)
+    return
+  }
+
   if (command === 'add') {
     const workspace = addWorkspace(argv[1] ?? process.cwd())
     console.log(`добавлен ${workspace.name} (${workspace.slug})`)
@@ -75,7 +81,7 @@ export function main(argv: readonly string[], web?: WebHandler): void {
   const hostname = readHost(argv)
 
   serve({ fetch: createApp(web).fetch, port, hostname }, (info) => {
-    console.log(`beadle    http://${hostname}:${info.port}`)
+    console.log(`beadle ${VERSION}  http://${hostname}:${info.port}`)
 
     if (!isLoopback(hostname)) {
       for (const address of lanAddresses()) {
