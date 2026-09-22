@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { createFileRoute, Link } from '@tanstack/react-router'
 
 import { workspacesQuery } from '../api.ts'
+import { useDocumentTitle } from '../document-title.ts'
 import { Notice } from '../notice.tsx'
 import * as styles from './index.css.ts'
 
@@ -10,6 +11,8 @@ export const Route = createFileRoute('/')({ component: WorkspacePicker })
 
 function WorkspacePicker() {
   const { data, status, error } = useQuery(workspacesQuery)
+
+  useDocumentTitle('beadle')
 
   if (status === 'pending') {
     return <Notice>Читаю реестр…</Notice>

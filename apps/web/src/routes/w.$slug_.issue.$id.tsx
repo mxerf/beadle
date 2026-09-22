@@ -3,6 +3,7 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { useCallback } from 'react'
 
 import { issueQuery } from '../api.ts'
+import { useDocumentTitle } from '../document-title.ts'
 import { Failure } from '../failure.tsx'
 import * as styles from '../issue-detail.css.ts'
 import { IssueDetail } from '../issue-detail.tsx'
@@ -26,6 +27,10 @@ function IssuePage() {
   const navigate = Route.useNavigate()
 
   const { data, status, error } = useQuery(issueQuery(slug, id))
+
+  // Номер впереди заголовка: во вкладке видно начало строки, а номер
+  // короткий, всегда разный и называет заодно проект.
+  useDocumentTitle(data ? `${data.issue.id} · ${data.issue.title}` : id)
 
   const reset = useCallback(() => {
     void navigate({ search: {}, replace: true })

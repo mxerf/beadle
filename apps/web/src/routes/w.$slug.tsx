@@ -4,9 +4,11 @@ import { useCallback } from 'react'
 
 import { issuesQuery } from '../api.ts'
 import { plural } from '../captions.ts'
+import { useDocumentTitle } from '../document-title.ts'
 import { IssueFilters } from '../issue-filters.tsx'
 import { type IssueSearch, issueSearchSchema } from '../search.ts'
 import { ViewSwitch } from '../view-switch.tsx'
+import { useViewCaption } from '../views.ts'
 import * as styles from './w.$slug.css.ts'
 
 /**
@@ -45,10 +47,14 @@ function WorkspaceLayout() {
     void navigate({ search: {}, replace: true })
   }, [navigate])
 
+  const name = data?.workspace.name ?? slug
+  const view = useViewCaption(slug)
+  useDocumentTitle([name, view].filter(Boolean).join(' · '))
+
   return (
     <>
       <header className={styles.head}>
-        <h1 className={styles.name}>{data?.workspace.name ?? slug}</h1>
+        <h1 className={styles.name}>{name}</h1>
         <span className={styles.counts}>
           {isFetching ? 'спрашиваю у bd…' : countsCaption(data?.issues)}
         </span>
