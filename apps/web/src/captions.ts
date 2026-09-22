@@ -59,3 +59,14 @@ export function plural(
   }
   return ones >= 2 && ones <= 4 ? few : many
 }
+
+/**
+ * Объяснение отказа. Машинный код сервера человеку ничего не говорит,
+ * а `bd_failed` он к тому же сопровождает подробностями — те уходят
+ * в подпись, а не в заголовок сообщения.
+ */
+export const failureCaption: Record<string, string> = {
+  bad_filters: 'Фильтр в ссылке не распознан',
+  bd_failed: 'bd не ответил',
+  workspace_not_found: 'Такого проекта нет в реестре'
+}

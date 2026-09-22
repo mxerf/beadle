@@ -13,7 +13,9 @@ export function Notice({
 }: {
   tone?: 'muted' | 'failure'
   children: ReactNode
-  hint?: string
+  // `| undefined` обязателен при `exactOptionalPropertyTypes`: подпись
+  // приходит из необязательного поля ответа и бывает буквально undefined.
+  hint?: string | undefined
 }) {
   return (
     <div className={styles.tone[tone]}>

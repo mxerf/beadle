@@ -3,6 +3,7 @@ import { createRouter, RouterProvider } from '@tanstack/react-router'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 
+import { ApiError } from './api.ts'
 import './global.css.ts'
 import { routeTree } from './routeTree.gen.ts'
 
@@ -18,10 +19,20 @@ declare module '@tanstack/react-router' {
  * Список приезжает одним запросом и стоит запуска `bd` на всём проекте,
  * поэтому возврат в окно его не перезапрашивает: данные трекера меняются
  * медленнее, чем человек переключает вкладки.
+ *
+ * Отказ из-за запроса (битый фильтр в адресе) не переспрашивается: повтор
+ * его не починит, а человек всё это время смотрит на «спрашиваю у bd».
  */
 const queryClient = new QueryClient({
   defaultOptions: {
-    queries: { staleTime: 30_000, refetchOnWindowFocus: false }
+    queries: {
+      staleTime: 30_000,
+      refetchOnWindowFocus: false,
+      retry: (failureCount, error) =>
+        error instanceof ApiError && error.status < 500
+          ? false
+          : failureCount < 2
+    }
   }
 })
 

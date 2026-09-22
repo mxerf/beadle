@@ -17,9 +17,14 @@ const TYPING_PAUSE_MS = 300
 type Props = {
   search: IssueSearch
   onChange: (patch: Partial<IssueSearch>) => void
+  /**
+   * Сброс — своё действие, а не пустой патч: патч сливается с прежним
+   * состоянием, и пустой патч не убирает из адреса ровно ничего.
+   */
+  onReset: () => void
 }
 
-export function IssueFilters({ search, onChange }: Props) {
+export function IssueFilters({ search, onChange, onReset }: Props) {
   const text = useSearchText(search.search, onChange)
 
   return (
@@ -56,19 +61,12 @@ export function IssueFilters({ search, onChange }: Props) {
         type="search"
         aria-label="Поиск по задачам"
       />
-      <button
-        className={styles.reset}
-        type="button"
-        onClick={() => onChange(EMPTY_FILTERS)}
-      >
+      <button className={styles.reset} type="button" onClick={onReset}>
         Сбросить
       </button>
     </div>
   )
 }
-
-/** Сброс — это отсутствие параметров в адресе, а не пустые значения в нём. */
-const EMPTY_FILTERS: IssueSearch = {}
 
 function Group({
   values,

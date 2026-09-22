@@ -1,4 +1,6 @@
 import {
+  errorResponseSchema,
+  type FilterProblem,
   type IssuesResponse,
   issuesResponseSchema,
   type Workspace,
@@ -16,33 +18,36 @@ import { type IssueSearch, toQueryString } from './search.ts'
 export class ApiError extends Error {
   constructor(
     message: string,
-    readonly status: number
+    readonly status: number,
+    /** Машинный код отказа: по нему страница подбирает объяснение. */
+    readonly code: string,
+    /** Что именно не разобралось: поля фильтров из адреса. */
+    readonly fields: readonly FilterProblem[] = []
   ) {
     super(message)
     this.name = 'ApiError'
   }
 }
 
-/** Сервер объясняет отказ полем `message`; показываем его, а не код. */
-function describeFailure(body: unknown, status: number): string {
-  if (typeof body === 'object' && body !== null) {
-    const { message, error } = body as { message?: unknown; error?: unknown }
-    if (typeof message === 'string') {
-      return message
-    }
-    if (typeof error === 'string') {
-      return error
-    }
-  }
-  return `сервер ответил ${status}`
-}
-
 async function getJson(path: string): Promise<unknown> {
   const response = await fetch(path)
+
   if (!response.ok) {
     const body: unknown = await response.json().catch(() => undefined)
-    throw new ApiError(describeFailure(body, response.status), response.status)
+    const failure = errorResponseSchema.safeParse(body)
+
+    if (!failure.success) {
+      throw new ApiError(
+        `сервер ответил ${response.status}`,
+        response.status,
+        'unknown'
+      )
+    }
+
+    const { error, message, fields } = failure.data
+    throw new ApiError(message ?? error, response.status, error, fields ?? [])
   }
+
   return response.json()
 }
 

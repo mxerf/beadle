@@ -3,8 +3,8 @@ import { createFileRoute } from '@tanstack/react-router'
 import type { ReactNode } from 'react'
 import { useCallback } from 'react'
 
-import { issuesQuery } from '../api.ts'
-import { plural } from '../captions.ts'
+import { ApiError, issuesQuery } from '../api.ts'
+import { failureCaption, plural } from '../captions.ts'
 import { IssueFilters } from '../issue-filters.tsx'
 import { IssueList } from '../issue-list.tsx'
 import { Notice } from '../notice.tsx'
@@ -42,9 +42,13 @@ function WorkspaceIssues() {
     [navigate]
   )
 
+  const reset = useCallback(() => {
+    void navigate({ search: {}, replace: true })
+  }, [navigate])
+
   function body(): ReactNode {
     if (status === 'error') {
-      return <Notice tone="failure">{error.message}</Notice>
+      return <Failure error={error} onReset={reset} />
     }
     if (status === 'pending') {
       return <Notice>Спрашиваю у bd…</Notice>
@@ -63,9 +67,38 @@ function WorkspaceIssues() {
           {isFetching ? 'спрашиваю у bd…' : countsCaption(data?.issues)}
         </span>
       </header>
-      <IssueFilters search={search} onChange={change} />
+      <IssueFilters search={search} onChange={change} onReset={reset} />
       {body()}
     </>
+  )
+}
+
+/**
+ * Отказ сервера объясняется человеку, а не показывается кодом. Нечитаемый
+ * фильтр в адресе — не тупик: из него должен быть выход одним щелчком,
+ * потому что ссылка могла прийти из закладки или переписки и устареть
+ * вместе со словарём статусов beads.
+ */
+function Failure({ error, onReset }: { error: Error; onReset: () => void }) {
+  const failure = error instanceof ApiError ? error : undefined
+  const caption = failure ? failureCaption[failure.code] : undefined
+  const detail = failure?.fields.length
+    ? failure.fields
+        .map((field) => `${field.path}: ${field.message}`)
+        .join('; ')
+    : undefined
+
+  return (
+    <Notice tone="failure" hint={detail ?? failure?.message}>
+      <div className={styles.failure}>
+        <span>{caption ?? error.message}</span>
+        {failure?.code === 'bad_filters' ? (
+          <button className={styles.action} type="button" onClick={onReset}>
+            Показать все задачи
+          </button>
+        ) : null}
+      </div>
+    </Notice>
   )
 }
 
