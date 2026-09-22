@@ -10,6 +10,7 @@ import {
   applyFilters,
   indexById,
   isBlocked,
+  readIssue,
   readIssues
 } from './issues.read.ts'
 import { findWorkspace, listWorkspaces } from './workspaces.ts'
@@ -94,6 +95,26 @@ export function createApp() {
           blocked: isBlocked(issue, byId)
         }))
       })
+    } catch (error) {
+      if (error instanceof BdError) {
+        return c.json({ error: 'bd_failed', message: error.message }, 502)
+      }
+      throw error
+    }
+  })
+
+  app.get('/api/w/:slug/issues/:id', async (c) => {
+    const workspace = findWorkspace(c.req.param('slug'))
+    if (!workspace) {
+      return c.json({ error: 'workspace_not_found' }, 404)
+    }
+
+    try {
+      const issue = await readIssue(workspace.path, c.req.param('id'))
+      if (!issue) {
+        return c.json({ error: 'issue_not_found' }, 404)
+      }
+      return c.json({ workspace, issue })
     } catch (error) {
       if (error instanceof BdError) {
         return c.json({ error: 'bd_failed', message: error.message }, 502)

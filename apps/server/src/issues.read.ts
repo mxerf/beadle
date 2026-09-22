@@ -1,4 +1,10 @@
-import { type Issue, type IssueFilters, issueSchema } from '@beadle/protocol'
+import {
+  type Issue,
+  type IssueDetail,
+  issueDetailSchema,
+  type IssueFilters,
+  issueSchema
+} from '@beadle/protocol'
 
 import { runBdJson } from './bd.ts'
 
@@ -23,6 +29,33 @@ export async function readIssues(cwd: string): Promise<Issue[]> {
   }
 
   return parsed.data
+}
+
+/**
+ * Подробности одной задачи. Отдельный вызов `bd`, а не выборка из списка:
+ * список не везёт комментарии и не раскрывает связи в задачи — только рёбра.
+ *
+ * Промах по номеру `bd` показывает не кодом возврата, а объектом с полем
+ * `error` вместо массива: отличаем по форме ответа.
+ */
+export async function readIssue(
+  cwd: string,
+  id: string
+): Promise<IssueDetail | undefined> {
+  const raw = await runBdJson(cwd, [
+    'show',
+    id,
+    '--json',
+    '--include-comments',
+    '--include-dependents'
+  ])
+
+  if (!Array.isArray(raw)) {
+    return undefined
+  }
+
+  const parsed = issueDetailSchema.safeParse(raw[0])
+  return parsed.success ? parsed.data : undefined
 }
 
 function matchesSearch(issue: Issue, needle: string): boolean {
