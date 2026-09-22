@@ -7,10 +7,9 @@ import { z } from 'zod'
  * перестаёт читаться человеком — ради читаемых ссылок проект и затеян.
  */
 /**
- * Значение из адреса. Строкой оно доезжает не всегда: маршрутизатор разбирает
- * каждый параметр как JSON, и `?priority=0` приходит числом, а `?priority=0,1`
- * — строкой, потому что JSON его не понял. Без приведения выбор одного
- * приоритета роняет разбор адреса целиком.
+ * Значение из адреса. Приводится к строке ремнём безопасности: разбор
+ * (`parseSearch` ниже) отдаёт строки всегда, но путь от адреса до экрана
+ * длинный, и молча уронить его из-за числа дороже одного `String()`.
  */
 const fromUrl = z
   .union([z.string(), z.number(), z.boolean()])
@@ -41,6 +40,56 @@ export const issueSearchSchema = issueFilterSearchSchema.extend({
 })
 
 export type IssueSearch = z.infer<typeof issueSearchSchema>
+
+/**
+ * Разбор адреса. Написан свой, а не взят `parseSearchWith`: тот прогоняет
+ * строку через декодер, который **до** всякого своего разбора приводит
+ * `1`, `0` и `true` к числу и булеву. Дальше по коду это лечилось приведением
+ * к строке, но сам маршрутизатор продолжал видеть сырое значение и сравнивать
+ * его со строковым — и переставал узнавать текущий вид, стоило появиться
+ * в адресе фильтру с числом. Здесь значения остаются такими, какими человек
+ * их написал в ссылке.
+ */
+export function parseSearch(raw: string): Record<string, string> {
+  const params = new URLSearchParams(raw.startsWith('?') ? raw.slice(1) : raw)
+  const search: Record<string, string> = {}
+
+  for (const [key, value] of params) {
+    search[key] = value
+  }
+
+  return search
+}
+
+/**
+ * Обратная сборка. Запятая в списке возвращается на место: в запросе адреса
+ * она законна (RFC 3986), а `%2C` в ссылке, которой делятся, читать невозможно.
+ */
+export function stringifySearch(search: Record<string, unknown>): string {
+  const params = new URLSearchParams()
+
+  for (const [key, value] of Object.entries(search)) {
+    // В адрес попадает только простое значение. Объект здесь — ошибка кода,
+    // и `[object Object]` в ссылке спрятал бы её вместо того, чтобы показать.
+    const text = toText(value)
+    if (text !== undefined) {
+      params.set(key, text)
+    }
+  }
+
+  const query = params.toString().replaceAll('%2C', ',')
+  return query === '' ? '' : `?${query}`
+}
+
+function toText(value: unknown): string | undefined {
+  if (typeof value === 'string') {
+    return value === '' ? undefined : value
+  }
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return String(value)
+  }
+  return undefined
+}
 
 export function toValues(raw: string | undefined): string[] {
   return raw ? raw.split(',').filter(Boolean) : []

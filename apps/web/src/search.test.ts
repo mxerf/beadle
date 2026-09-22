@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest'
 
 import {
   issueSearchSchema,
+  parseSearch,
+  stringifySearch,
   toggleValue,
   toQueryString,
   toValues
@@ -81,5 +83,57 @@ describe('issueSearchSchema', () => {
 
   it('пустой адрес остаётся пустым, а не набором «undefined»', () => {
     expect(issueSearchSchema.parse({})).toEqual({})
+  })
+})
+
+describe('parseSearch', () => {
+  /*
+   * Ради этого разбор и написан свой. Готовый приводит `1`, `0` и `true`
+   * к числу и булеву ещё до всякого разбора, и маршрутизатор потом сравнивает
+   * сырое значение из адреса со строковым из ссылки — они не совпадают,
+   * и переключатель видов перестаёт подсвечивать текущий вид. Ни типы, ни
+   * линт этого не видят: обе стороны законны по отдельности.
+   */
+  it('не превращает значения, похожие на JSON, в числа и булевы', () => {
+    expect(parseSearch('?ready=1')).toEqual({ ready: '1' })
+    expect(parseSearch('?priority=0')).toEqual({ priority: '0' })
+    expect(parseSearch('?ready=true')).toEqual({ ready: 'true' })
+  })
+
+  it('понимает адрес и с вопросительным знаком, и без', () => {
+    expect(parseSearch('status=open')).toEqual({ status: 'open' })
+    expect(parseSearch('?status=open')).toEqual({ status: 'open' })
+  })
+
+  it('пустой адрес — пустой отбор', () => {
+    expect(parseSearch('')).toEqual({})
+    expect(parseSearch('?')).toEqual({})
+  })
+
+  it('раскодирует кириллицу и запятые', () => {
+    expect(
+      parseSearch('?search=%D1%82%D0%B5%D1%81%D1%82&priority=0,1')
+    ).toEqual({ search: 'тест', priority: '0,1' })
+  })
+})
+
+describe('stringifySearch', () => {
+  it('пустой отбор не оставляет в адресе хвоста', () => {
+    expect(stringifySearch({})).toBe('')
+    expect(stringifySearch({ status: undefined })).toBe('')
+  })
+
+  it('оставляет запятые читаемыми', () => {
+    expect(stringifySearch({ priority: '0,1' })).toBe('?priority=0,1')
+  })
+
+  it('возвращает ровно то, что разобрал', () => {
+    for (const query of [
+      '?ready=1',
+      '?priority=0,1',
+      '?status=open&ready=true'
+    ]) {
+      expect(stringifySearch(parseSearch(query))).toBe(query)
+    }
   })
 })

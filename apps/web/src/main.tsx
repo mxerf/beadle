@@ -1,35 +1,19 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import {
-  createRouter,
-  parseSearchWith,
-  RouterProvider,
-  stringifySearchWith
-} from '@tanstack/react-router'
+import { createRouter, RouterProvider } from '@tanstack/react-router'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 
 import { ApiError } from './api.ts'
 import './global.css.ts'
 import { routeTree } from './routeTree.gen.ts'
+import { parseSearch, stringifySearch } from './search.ts'
 
 /**
- * Параметры адреса — простые строки, без JSON.
- *
- * По умолчанию маршрутизатор гоняет каждое значение через `JSON.parse`
- * и `JSON.stringify`: `?priority=0` приезжает числом и валит разбор, а строка
- * `'0'` уезжает обратно как `?priority=%220%22`. Читаемая ссылка — то, ради
- * чего проект и написан, поэтому разбор заменён на тождественный: адрес
- * выглядит и передаётся так же, как его принимает сервер.
+ * Параметры адреса — простые строки, без JSON. Читаемая ссылка — то, ради
+ * чего проект и написан, поэтому и разбор, и сборка свои: они живут
+ * в `search.ts` рядом с остальным знанием об адресе и покрыты тестами.
  */
-const stringify = stringifySearchWith(String)
-
-const router = createRouter({
-  routeTree,
-  parseSearch: parseSearchWith((value) => value),
-  // Запятая в списке возвращается на место: в запросе адреса она законна
-  // (RFC 3986), а `%2C` в ссылке, которой делятся, читать невозможно.
-  stringifySearch: (search) => stringify(search).replaceAll('%2C', ',')
-})
+const router = createRouter({ routeTree, parseSearch, stringifySearch })
 
 declare module '@tanstack/react-router' {
   interface Register {
