@@ -21,10 +21,14 @@ import { routeTree } from './routeTree.gen.ts'
  * чего проект и написан, поэтому разбор заменён на тождественный: адрес
  * выглядит и передаётся так же, как его принимает сервер.
  */
+const stringify = stringifySearchWith(String)
+
 const router = createRouter({
   routeTree,
   parseSearch: parseSearchWith((value) => value),
-  stringifySearch: stringifySearchWith(String)
+  // Запятая в списке возвращается на место: в запросе адреса она законна
+  // (RFC 3986), а `%2C` в ссылке, которой делятся, читать невозможно.
+  stringifySearch: (search) => stringify(search).replaceAll('%2C', ',')
 })
 
 declare module '@tanstack/react-router' {
