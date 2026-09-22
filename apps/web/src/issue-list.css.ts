@@ -1,6 +1,6 @@
 import { style } from '@vanilla-extract/css'
 
-import { lift, vars } from './theme.css.ts'
+import { focusRing, lift, vars } from './theme.css.ts'
 
 /**
  * Одна плотная карточка на весь список — как группа в эпиках: разделителей
@@ -23,6 +23,7 @@ export const list = style({
 /** Наведение не красит строку, а поднимает её над соседними. */
 export const row = style([
   lift,
+  focusRing,
   {
     position: 'relative',
     display: 'grid',

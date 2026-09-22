@@ -11,6 +11,7 @@ import {
   typeCaption
 } from './captions.ts'
 import * as styles from './issue-board.css.ts'
+import { IssueRoute } from './issue-link.tsx'
 import { byImportance } from './ordering.ts'
 import * as tag from './tag.css.ts'
 
@@ -61,7 +62,7 @@ function Column({
 
 function IssueCard({ issue }: { issue: IssueView }) {
   return (
-    <article className={styles.card}>
+    <IssueRoute id={issue.id} className={styles.card}>
       <div className={styles.cardHead}>
         <span className={tag.tone[priorityTone(issue.priority)]}>
           {priorityCaption(issue.priority)}
@@ -78,6 +79,6 @@ function IssueCard({ issue }: { issue: IssueView }) {
         <span className={styles.id}>{issue.id}</span>
         {issue.assignee ? <span>{issue.assignee}</span> : null}
       </div>
-    </article>
+    </IssueRoute>
   )
 }

@@ -1,6 +1,6 @@
 import { style } from '@vanilla-extract/css'
 
-import { lift, vars } from './theme.css.ts'
+import { focusRing, lift, vars } from './theme.css.ts'
 
 export const board = style({
   display: 'grid',
@@ -57,6 +57,7 @@ export const stack = style({
 
 export const card = style([
   lift,
+  focusRing,
   {
     position: 'relative',
     display: 'flex',

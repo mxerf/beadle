@@ -5,6 +5,7 @@ import {
   statusTone,
   typeCaption
 } from './captions.ts'
+import { IssueRoute } from './issue-link.tsx'
 import * as styles from './issue-tree.css.ts'
 import { byImportance } from './ordering.ts'
 import * as tag from './tag.css.ts'
@@ -52,7 +53,7 @@ function GroupHead({
   const done = total > 0 ? Math.round((closed / total) * 100) : 0
 
   return (
-    <header className={styles.head}>
+    <IssueRoute id={node.issue.id} className={styles.head}>
       <span className={tag.tone.quiet}>
         {typeCaption[node.issue.issue_type]}
       </span>
@@ -76,7 +77,7 @@ function GroupHead({
         {statusCaption[node.issue.status]}
       </span>
       <span className={styles.id}>{node.issue.id}</span>
-    </header>
+    </IssueRoute>
   )
 }
 
@@ -91,7 +92,7 @@ function Children({ nodes, matched, progress }: Props) {
         .toSorted((a, b) => byImportance(a.issue, b.issue))
         .map((node) => (
           <div key={node.issue.id}>
-            <div className={styles.branch}>
+            <IssueRoute id={node.issue.id} className={styles.branch}>
               <span className={tag.tone[priorityTone(node.issue.priority)]}>
                 {priorityCaption(node.issue.priority)}
               </span>
@@ -112,7 +113,7 @@ function Children({ nodes, matched, progress }: Props) {
                 {statusCaption[node.issue.status]}
               </span>
               <span className={styles.id}>{node.issue.id}</span>
-            </div>
+            </IssueRoute>
             {node.children.length > 0 ? (
               <div className={styles.nested}>
                 <Children

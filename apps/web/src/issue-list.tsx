@@ -7,6 +7,7 @@ import {
   statusTone,
   typeCaption
 } from './captions.ts'
+import { IssueRoute } from './issue-link.tsx'
 import * as styles from './issue-list.css.ts'
 import { byImportance } from './ordering.ts'
 import * as tag from './tag.css.ts'
@@ -24,7 +25,7 @@ export function IssueList({ issues }: { issues: readonly IssueView[] }) {
 
 function IssueRow({ issue }: { issue: IssueView }) {
   return (
-    <div className={styles.row}>
+    <IssueRoute id={issue.id} className={styles.row}>
       <span className={tag.tone[priorityTone(issue.priority)]}>
         {priorityCaption(issue.priority)}
       </span>
@@ -49,6 +50,6 @@ function IssueRow({ issue }: { issue: IssueView }) {
         {statusCaption[issue.status]}
       </span>
       <span className={styles.id}>{issue.id}</span>
-    </div>
+    </IssueRoute>
   )
 }

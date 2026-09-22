@@ -1,6 +1,6 @@
 import { style } from '@vanilla-extract/css'
 
-import { lift, vars } from './theme.css.ts'
+import { focusRing, lift, vars } from './theme.css.ts'
 
 export const tree = style({
   display: 'grid',
@@ -14,12 +14,20 @@ export const group = style({
   background: vars.color.card
 })
 
-export const head = style({
-  display: 'flex',
-  alignItems: 'center',
-  gap: vars.space[3],
-  paddingBottom: vars.space[2]
-})
+/** Заголовок группы — тоже ссылка: у эпика своя страница. */
+export const head = style([
+  lift,
+  focusRing,
+  {
+    position: 'relative',
+    display: 'flex',
+    alignItems: 'center',
+    gap: vars.space[3],
+    padding: `${vars.space[1]} ${vars.space[2]} ${vars.space[2]}`,
+    borderRadius: vars.radius.md,
+    background: vars.color.card
+  }
+])
 
 export const heading = style({
   flex: 1,
@@ -59,6 +67,7 @@ export const barFill = style({
 
 export const branch = style([
   lift,
+  focusRing,
   {
     position: 'relative',
     display: 'flex',
