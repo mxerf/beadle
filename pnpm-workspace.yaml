@@ -1,0 +1,82 @@
+packages:
+  - apps/*
+  - packages/*
+
+# lefthook ставит бинарь в postinstall — без сборки хуки не встанут.
+allowBuilds:
+  lefthook: true
+
+# Версии живут здесь, а не в каждом package.json: иначе три пакета разъезжаются
+# по минорам и в сборку приезжают два React одновременно.
+catalog:
+  # рантайм и сборка
+  react: ^19.3.0
+  react-dom: ^19.3.0
+  vite: ^8.3.0
+  typescript: ^7.0.2
+
+  # сервер
+  hono: ^4.13.8
+
+  # данные и маршруты
+  '@tanstack/react-router': ^1.170.38
+  '@tanstack/react-query': ^5.103.2
+  '@tanstack/react-table': ^9.2.4
+
+  # стили
+  '@vanilla-extract/css': ^1.21.2
+  '@vanilla-extract/vite-plugin': ^5.2.6
+
+  # контракт
+  zod: ^4.6.5
+
+  # проверки
+  vitest: ^5.0.1
+  oxlint: ^1.85.0
+  oxfmt: ^0.70.0
+
+  # типы
+  '@types/react': ^19.3.0
+  '@types/react-dom': ^19.3.0
+
+minimumReleaseAgeExclude:
+  - '@oxfmt/binding-android-arm-eabi@0.70.0'
+  - '@oxfmt/binding-android-arm64@0.70.0'
+  - '@oxfmt/binding-darwin-arm64@0.70.0'
+  - '@oxfmt/binding-darwin-x64@0.70.0'
+  - '@oxfmt/binding-freebsd-x64@0.70.0'
+  - '@oxfmt/binding-linux-arm-gnueabihf@0.70.0'
+  - '@oxfmt/binding-linux-arm-musleabihf@0.70.0'
+  - '@oxfmt/binding-linux-arm64-gnu@0.70.0'
+  - '@oxfmt/binding-linux-arm64-musl@0.70.0'
+  - '@oxfmt/binding-linux-ppc64-gnu@0.70.0'
+  - '@oxfmt/binding-linux-riscv64-gnu@0.70.0'
+  - '@oxfmt/binding-linux-riscv64-musl@0.70.0'
+  - '@oxfmt/binding-linux-s390x-gnu@0.70.0'
+  - '@oxfmt/binding-linux-x64-gnu@0.70.0'
+  - '@oxfmt/binding-linux-x64-musl@0.70.0'
+  - '@oxfmt/binding-openharmony-arm64@0.70.0'
+  - '@oxfmt/binding-win32-arm64-msvc@0.70.0'
+  - '@oxfmt/binding-win32-ia32-msvc@0.70.0'
+  - '@oxfmt/binding-win32-x64-msvc@0.70.0'
+  - '@oxlint/binding-android-arm-eabi@1.85.0'
+  - '@oxlint/binding-android-arm64@1.85.0'
+  - '@oxlint/binding-darwin-arm64@1.85.0'
+  - '@oxlint/binding-darwin-x64@1.85.0'
+  - '@oxlint/binding-freebsd-x64@1.85.0'
+  - '@oxlint/binding-linux-arm-gnueabihf@1.85.0'
+  - '@oxlint/binding-linux-arm-musleabihf@1.85.0'
+  - '@oxlint/binding-linux-arm64-gnu@1.85.0'
+  - '@oxlint/binding-linux-arm64-musl@1.85.0'
+  - '@oxlint/binding-linux-ppc64-gnu@1.85.0'
+  - '@oxlint/binding-linux-riscv64-gnu@1.85.0'
+  - '@oxlint/binding-linux-riscv64-musl@1.85.0'
+  - '@oxlint/binding-linux-s390x-gnu@1.85.0'
+  - '@oxlint/binding-linux-x64-gnu@1.85.0'
+  - '@oxlint/binding-linux-x64-musl@1.85.0'
+  - '@oxlint/binding-openharmony-arm64@1.85.0'
+  - '@oxlint/binding-win32-arm64-msvc@1.85.0'
+  - '@oxlint/binding-win32-ia32-msvc@1.85.0'
+  - '@oxlint/binding-win32-x64-msvc@1.85.0'
+  - oxfmt@0.70.0
+  - oxlint@1.85.0

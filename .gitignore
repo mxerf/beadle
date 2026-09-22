@@ -1,0 +1,17 @@
+node_modules/
+dist/
+.turbo/
+*.log
+
+# Агенту — только белый список. Всё остальное в .claude/ не трекается:
+# это единственная нетрекаемая папка репозитория, и без списка она зарастает.
+.claude/*
+!.claude/skills/
+!.claude/agents/
+!.claude/commands/
+!.claude/settings.json
+
+# Нетрекаемое: черновики, выгрузки, материалы. У свалки свой адрес.
+local/
+
+.DS_Store
