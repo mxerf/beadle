@@ -4,6 +4,7 @@ packages:
 
 # lefthook ставит бинарь в postinstall — без сборки хуки не встанут.
 allowBuilds:
+  esbuild: true
   lefthook: true
 
 # Версии живут здесь, а не в каждом package.json: иначе три пакета разъезжаются
@@ -13,6 +14,7 @@ catalog:
   react: ^19.3.0
   react-dom: ^19.3.0
   vite: ^8.3.0
+  '@vitejs/plugin-react': ^6.1.1
   typescript: ^7.0.2
 
   # сервер
@@ -20,6 +22,7 @@ catalog:
 
   # данные и маршруты
   '@tanstack/react-router': ^1.170.38
+  '@tanstack/router-plugin': ^1.168.40
   '@tanstack/react-query': ^5.103.2
   '@tanstack/react-table': ^9.2.4
 
@@ -80,3 +83,5 @@ minimumReleaseAgeExclude:
   - '@oxlint/binding-win32-x64-msvc@1.85.0'
   - oxfmt@0.70.0
   - oxlint@1.85.0
+  - '@tanstack/query-core@5.103.2'
+  - '@tanstack/react-query@5.103.2'

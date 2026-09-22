@@ -13,6 +13,9 @@
   "rules": {
     "eqeqeq": ["error", "always"],
     "no-console": "off",
+    // Глобальные стили vanilla-extract подключаются только побочным импортом:
+    // файл не экспортирует ничего, его работа — попасть в сборку.
+    "import/no-unassigned-import": ["error", { "allow": ["**/*.css.ts"] }],
     "typescript/no-floating-promises": "error",
     "typescript/no-misused-promises": "error",
     "import/no-cycle": "error"
