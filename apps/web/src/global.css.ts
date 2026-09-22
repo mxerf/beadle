@@ -28,7 +28,7 @@ globalStyle('html, body, #root', { height: '100%' })
  *
  * `corner-shape` умеет только Chromium; в Safari и Firefox углы останутся
  * круглыми. Это деградация внешности, а не поломка — путь-фоллбэк на
- * `clip-path` из exploo переносится, если понадобится.
+ * `clip-path` из дизайн-системы переносится, если понадобится.
  */
 const squircle = { cornerShape: vars.shape.corner }
 
