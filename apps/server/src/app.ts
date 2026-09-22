@@ -1,4 +1,8 @@
-import { issueFiltersSchema } from '@beadle/protocol'
+import {
+  type FilterProblem,
+  type IssueFilters,
+  issueFiltersSchema
+} from '@beadle/protocol'
 import { Hono } from 'hono'
 
 import { BdError } from './bd.ts'
@@ -25,8 +29,17 @@ function parseList(value: string | undefined): string[] | undefined {
   return items.length > 0 ? items : undefined
 }
 
-function parseFilters(query: Record<string, string>) {
-  return issueFiltersSchema.parse({
+type ParsedFilters =
+  | { ok: true; filters: IssueFilters }
+  | { ok: false; fields: FilterProblem[] }
+
+/**
+ * Разбор фильтров из адреса. Нераспознанное значение — отказ, а не пропуск:
+ * адрес здесь описывает состояние экрана целиком, и показать список, тихо
+ * выбросив непонятную часть адреса, значит соврать о том, что человек видит.
+ */
+export function parseFilters(query: Record<string, string>): ParsedFilters {
+  const parsed = issueFiltersSchema.safeParse({
     status: parseList(query['status']),
     type: parseList(query['type']),
     priority: parseList(query['priority'])?.map(Number),
@@ -35,6 +48,18 @@ function parseFilters(query: Record<string, string>) {
     parent: query['parent'] || undefined,
     search: query['search'] || undefined
   })
+
+  if (parsed.success) {
+    return { ok: true, filters: parsed.data }
+  }
+
+  return {
+    ok: false,
+    fields: parsed.error.issues.map((issue) => ({
+      path: issue.path.join('.'),
+      message: issue.message
+    }))
+  }
 }
 
 export function createApp() {
@@ -50,10 +75,17 @@ export function createApp() {
       return c.json({ error: 'workspace_not_found' }, 404)
     }
 
+    // Фильтры разбираются до обращения к bd: читать весь проект ради
+    // запроса, на который всё равно ответим отказом, незачем.
+    const filters = parseFilters(c.req.query())
+    if (!filters.ok) {
+      return c.json({ error: 'bad_filters', fields: filters.fields }, 400)
+    }
+
     try {
       const issues = await readIssues(workspace.path)
       const byId = indexById(issues)
-      const filtered = applyFilters(issues, parseFilters(c.req.query()))
+      const filtered = applyFilters(issues, filters.filters)
 
       return c.json({
         workspace,
