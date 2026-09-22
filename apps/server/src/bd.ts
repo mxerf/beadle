@@ -44,15 +44,12 @@ function jsonFromFailure(cause: unknown): string | undefined {
 }
 
 /**
- * Запускает `bd` в каталоге проекта и возвращает разобранный JSON.
+ * Запускает `bd` в каталоге проекта и отдаёт его вывод.
  *
  * @param cwd Корень воркспейса — от него `bd` находит свой `.beads`.
  * @param args Аргументы команды без имени бинаря.
  */
-export async function runBdJson(
-  cwd: string,
-  args: readonly string[]
-): Promise<unknown> {
+async function runBd(cwd: string, args: readonly string[]): Promise<string> {
   const binary = process.env.BD_BIN ?? 'bd'
 
   let stdout: string
@@ -77,6 +74,15 @@ export async function runBdJson(
     stdout = answered
   }
 
+  return stdout
+}
+
+export async function runBdJson(
+  cwd: string,
+  args: readonly string[]
+): Promise<unknown> {
+  const stdout = await runBd(cwd, args)
+
   try {
     return JSON.parse(stdout)
   } catch {
@@ -86,4 +92,12 @@ export async function runBdJson(
       args
     )
   }
+}
+
+/** Односложный ответ `bd`: настройки проекта отдаются простой строкой. */
+export async function runBdText(
+  cwd: string,
+  args: readonly string[]
+): Promise<string> {
+  return (await runBd(cwd, args)).trim()
 }

@@ -58,3 +58,17 @@ export const errorResponseSchema = z.object({
 
 export type FilterProblem = z.infer<typeof filterProblemSchema>
 export type ErrorResponse = z.infer<typeof errorResponseSchema>
+
+/**
+ * Состояние живого обновления. `bd` выкладывает выгрузку задач в файл
+ * только при включённом `export.auto`, и не чаще, чем раз в `export.interval`.
+ * Поэтому и то и другое едет на экран: молчащая страница должна уметь
+ * объяснить, почему она молчит, — иначе человек решит, что всё сломалось.
+ */
+export const liveStatusSchema = z.object({
+  live: z.boolean(),
+  /** Как часто `bd` обновляет выгрузку, его же словами: `60s`. */
+  interval: z.string().optional()
+})
+
+export type LiveStatus = z.infer<typeof liveStatusSchema>

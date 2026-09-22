@@ -7,6 +7,7 @@ import { useDocumentTitle } from '../document-title.ts'
 import { Failure } from '../failure.tsx'
 import * as styles from '../issue-detail.css.ts'
 import { IssueDetail } from '../issue-detail.tsx'
+import { useLiveUpdates } from '../live.ts'
 import { Notice } from '../notice.tsx'
 import { issueSearchSchema } from '../search.ts'
 
@@ -27,6 +28,10 @@ function IssuePage() {
   const navigate = Route.useNavigate()
 
   const { data, status, error } = useQuery(issueQuery(slug, id))
+
+  // Страница задачи живёт вне раскладки проекта, поэтому за новостями
+  // следит сама: правку, сделанную в терминале, видно и здесь.
+  useLiveUpdates(slug)
 
   // Номер впереди заголовка: во вкладке видно начало строки, а номер
   // короткий, всегда разный и называет заодно проект.

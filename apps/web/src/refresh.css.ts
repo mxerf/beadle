@@ -1,4 +1,4 @@
-import { style } from '@vanilla-extract/css'
+import { style, styleVariants } from '@vanilla-extract/css'
 
 import { focusRing, press, vars } from './theme.css.ts'
 
@@ -19,3 +19,22 @@ export const refresh = style([
     }
   }
 ])
+
+/**
+ * Точка состояния: зелёная — новости придут сами, серая — страница будет
+ * стареть молча. Цвет, а не прозрачность: выключенное здесь не «приглушённое
+ * включённое», а другое состояние.
+ */
+const markBase = style({
+  display: 'inline-block',
+  width: '6px',
+  height: '6px',
+  marginRight: vars.space[2],
+  borderRadius: vars.radius.pill,
+  verticalAlign: 'middle'
+})
+
+export const mark = styleVariants({
+  live: [markBase, { background: vars.color.primary }],
+  still: [markBase, { background: vars.color.faint }]
+})

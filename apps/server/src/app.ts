@@ -4,8 +4,10 @@ import {
   issueFiltersSchema
 } from '@beadle/protocol'
 import { Hono } from 'hono'
+import { streamSSE } from 'hono/streaming'
 
 import { BdError } from './bd.ts'
+import { fingerprint, type LiveSetup, readLiveSetup } from './changes.ts'
 import {
   applyFilters,
   indexById,
@@ -64,6 +66,12 @@ export function parseFilters(query: Record<string, string>): ParsedFilters {
   }
 }
 
+/** Как часто смотреть на выгрузку. `stat` бесплатен: процесс не запускается. */
+const POLL_MS = 1000
+
+/** Молчание дольше этого посредники принимают за обрыв. */
+const HEARTBEAT_MS = 25_000
+
 export function createApp() {
   const app = new Hono()
 
@@ -99,6 +107,71 @@ export function createApp() {
       }
       throw error
     }
+  })
+
+  /**
+   * Поток новостей о проекте. Соединение держит один клиент и одна вкладка:
+   * состояния на сервере нет, как и везде здесь, — какой проект слушать,
+   * сказано в адресе.
+   */
+  app.get('/api/w/:slug/events', async (c) => {
+    const workspace = findWorkspace(c.req.param('slug'))
+    if (!workspace) {
+      return c.json({ error: 'workspace_not_found' }, 404)
+    }
+
+    let setup: LiveSetup
+    try {
+      setup = await readLiveSetup(workspace.path)
+    } catch (error) {
+      if (error instanceof BdError) {
+        return c.json({ error: 'bd_failed', message: error.message }, 502)
+      }
+      throw error
+    }
+
+    return streamSSE(c, async (stream) => {
+      // Первым делом — можно ли вообще следить: страница, которая не будет
+      // обновляться, обязана сказать об этом сразу, а не притворяться живой.
+      await stream.writeSSE({
+        event: 'ready',
+        data: JSON.stringify(
+          setup.live
+            ? { live: true, interval: setup.interval }
+            : { live: false }
+        )
+      })
+      if (!setup.live) {
+        return
+      }
+
+      let seen = await fingerprint(setup.file)
+      let idle = 0
+
+      // Опрос последователен по своей природе: следующий взгляд на файл
+      // имеет смысл только после предыдущего, а совет правила собрать
+      // обещания и подождать все разом превратил бы ожидание в busy loop.
+      /* oxlint-disable no-await-in-loop */
+      while (!stream.aborted && !stream.closed) {
+        await stream.sleep(POLL_MS)
+        const now = await fingerprint(setup.file)
+
+        if (now !== seen) {
+          seen = now
+          idle = 0
+          await stream.writeSSE({ event: 'changed', data: now })
+          continue
+        }
+
+        idle += POLL_MS
+        if (idle >= HEARTBEAT_MS) {
+          idle = 0
+          // Пустое сообщение — чтобы посредник не счёл молчание обрывом.
+          await stream.writeSSE({ event: 'ping', data: '' })
+        }
+      }
+      /* oxlint-enable no-await-in-loop */
+    })
   })
 
   app.get('/api/w/:slug/issues/:id', async (c) => {

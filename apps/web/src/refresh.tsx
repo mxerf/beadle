@@ -1,3 +1,4 @@
+import type { LiveStatus } from '@beadle/protocol'
 import { useEffect, useState } from 'react'
 
 import { formatAgo } from './captions.ts'
@@ -14,10 +15,12 @@ const TICK_MS = 20_000
 export function Refresh({
   updatedAt,
   fetching,
+  live,
   onRefresh
 }: {
   updatedAt: number
   fetching: boolean
+  live: LiveStatus
   onRefresh: () => void
 }) {
   const now = useTick(TICK_MS)
@@ -26,12 +29,25 @@ export function Refresh({
     <button
       type="button"
       className={styles.refresh}
-      title="Спросить bd заново (r)"
+      title={hint(live)}
       onClick={onRefresh}
     >
+      <span className={styles.mark[live.live ? 'live' : 'still']} />
       {caption(updatedAt, now, fetching)}
     </button>
   )
+}
+
+/**
+ * Подсказка объясняет, ждать ли новостей самому. Когда ждать нечего,
+ * она называет команду: человек здесь всё равно рядом с терминалом.
+ */
+function hint(live: LiveStatus): string {
+  if (!live.live) {
+    return 'Изменения не отслеживаются: в проекте выключен export.auto. Включается командой bd config set export.auto true. Нажатие спросит bd заново (r)'
+  }
+  const often = live.interval ? ` не чаще чем раз в ${live.interval}` : ''
+  return `Изменения приходят сами${often}. Нажатие спросит bd заново (r)`
 }
 
 function caption(updatedAt: number, now: number, fetching: boolean): string {

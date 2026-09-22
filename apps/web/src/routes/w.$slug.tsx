@@ -7,6 +7,7 @@ import { plural } from '../captions.ts'
 import { useDocumentTitle } from '../document-title.ts'
 import { Hints } from '../hints.tsx'
 import { IssueFilters } from '../issue-filters.tsx'
+import { useLiveUpdates } from '../live.ts'
 import { Refresh } from '../refresh.tsx'
 import { type IssueSearch, issueSearchSchema } from '../search.ts'
 import { useShortcuts } from '../shortcuts.ts'
@@ -36,6 +37,7 @@ function WorkspaceLayout() {
     issuesQuery(slug, search)
   )
   const queryClient = useQueryClient()
+  const live = useLiveUpdates(slug)
   const [hints, setHints] = useState(false)
 
   const change = useCallback(
@@ -102,6 +104,7 @@ function WorkspaceLayout() {
         <Refresh
           updatedAt={dataUpdatedAt}
           fetching={isFetching}
+          live={live}
           onRefresh={refresh}
         />
         <button
