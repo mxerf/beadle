@@ -14,7 +14,19 @@ import { join, relative } from 'node:path'
 const ROOT = join(import.meta.dirname, '..')
 const DIST = join(ROOT, 'apps', 'web', 'dist')
 const BUILD = join(ROOT, 'build')
-const BINARY = join(ROOT, 'beadle')
+
+/**
+ * `--target` и `--outfile` нужны сборке на стороне: `bun` умеет собирать
+ * под чужую платформу с любой, поэтому все бинари выпуска делаются одним
+ * раннером, а не матрицей из четырёх операционных систем.
+ */
+function flag(name: string): string | undefined {
+  const at = process.argv.indexOf(`--${name}`)
+  return at === -1 ? undefined : process.argv[at + 1]
+}
+
+const TARGET = flag('target')
+const BINARY = flag('outfile') ?? join(ROOT, 'beadle')
 
 function collect(directory: string): string[] {
   return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
@@ -99,9 +111,16 @@ writeEntry()
 
 execFileSync(
   'bun',
-  ['build', '--compile', '--outfile', BINARY, join(BUILD, 'entry.ts')],
+  [
+    'build',
+    '--compile',
+    ...(TARGET === undefined ? [] : ['--target', TARGET]),
+    '--outfile',
+    BINARY,
+    join(BUILD, 'entry.ts')
+  ],
   { cwd: ROOT, stdio: 'inherit' }
 )
 
 console.log(`\nвшито файлов фронта: ${files.length}`)
-console.log(`бинарь: ${BINARY}`)
+console.log(`бинарь: ${BINARY}${TARGET === undefined ? '' : ` (${TARGET})`}`)

@@ -1,0 +1,48 @@
+name: Проверки
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Одна и та же ветка, запущенная дважды подряд, отменяет прошлый прогон:
+# держать очередь из устаревших проверок незачем.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gate:
+    name: Линт, типы, тесты и сборка бинаря
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      # Версия та же, на которой собирают руками: `bun build --compile`
+      # вшивает в бинарь свой рантайм, и «любая свежая» тут не годится.
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Проверки
+        run: pnpm gate
+
+      # Бинарь собирается и на обычном прогоне: сборка ломается отдельно
+      # от тестов — вшивание фронта не покрыто ничем, кроме неё самой.
+      - name: Сборка бинаря
+        run: pnpm binary
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: beadle-linux-x64
+          path: beadle
+          retention-days: 14

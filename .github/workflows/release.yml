@@ -1,0 +1,65 @@
+name: Выпуск
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  binaries:
+    name: Бинари под четыре платформы
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+
+      - run: pnpm install --frozen-lockfile
+
+      # Проверки повторяются и здесь: выпуск не должен зависеть от того,
+      # добежал ли соседний поток до конца.
+      - name: Проверки
+        run: pnpm gate
+
+      - name: Фронт
+        run: pnpm --filter @beadle/web build
+
+      # Все четыре — с одного раннера: `bun` собирает под чужую платформу
+      # с любой, и матрица из четырёх операционных систем тут лишняя.
+      - name: Бинари
+        run: |
+          mkdir -p out
+          for target in darwin-arm64 darwin-x64 linux-x64 linux-arm64; do
+            bun scripts/build-binary.ts \
+              --target "bun-$target" \
+              --outfile "out/beadle-$target"
+          done
+          cd out && sha256sum beadle-* > checksums.txt && cat checksums.txt
+
+      # Текст выпуска пишется файлом, а не строкой в команде: внутри блока
+      # отступы YAML уехали бы прямо в описание.
+      - name: Выложить в выпуск
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+          REPO: ${{ github.repository }}
+        run: |
+          {
+            echo "Что изменилось — в [CHANGELOG.md](https://github.com/$REPO/blob/$TAG/CHANGELOG.md)."
+            echo
+            echo "Бинарь самодостаточен: сервер и интерфейс внутри одного файла."
+            echo "Нужен только установленный \`bd\`."
+          } > notes.md
+          gh release create "$TAG" --title "beadle $TAG" --notes-file notes.md \
+            out/beadle-* out/checksums.txt
