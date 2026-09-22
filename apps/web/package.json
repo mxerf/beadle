@@ -17,7 +17,8 @@
     "react": "catalog:",
     "react-dom": "catalog:",
     "react-markdown": "catalog:",
-    "remark-gfm": "catalog:"
+    "remark-gfm": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@tanstack/router-plugin": "catalog:",
