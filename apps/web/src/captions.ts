@@ -108,6 +108,30 @@ export function formatDate(iso: string): string {
   return Number.isNaN(date.getTime()) ? iso : dateFormat.format(date)
 }
 
+/**
+ * Давность в словах. Точное время здесь не нужно: вопрос не «когда», а
+ * «насколько устарело то, что я вижу», и ответ на него достаточно грубый.
+ */
+export function formatAgo(milliseconds: number): string {
+  const seconds = Math.max(0, Math.round(milliseconds / 1000))
+  if (seconds < 45) {
+    return 'только что'
+  }
+
+  const minutes = Math.round(seconds / 60)
+  if (minutes < 60) {
+    return `${minutes} ${plural(minutes, 'минуту', 'минуты', 'минут')} назад`
+  }
+
+  const hours = Math.round(minutes / 60)
+  if (hours < 24) {
+    return `${hours} ${plural(hours, 'час', 'часа', 'часов')} назад`
+  }
+
+  const days = Math.round(hours / 24)
+  return `${days} ${plural(days, 'день', 'дня', 'дней')} назад`
+}
+
 /** Оценка приходит минутами, а живёт в голове часами и днями. */
 export function formatDuration(minutes: number): string {
   if (minutes < 60) {

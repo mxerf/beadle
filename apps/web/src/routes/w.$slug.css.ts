@@ -1,6 +1,6 @@
 import { style } from '@vanilla-extract/css'
 
-import { vars } from '../theme.css.ts'
+import { focusRing, press, vars } from '../theme.css.ts'
 
 export const head = style({
   display: 'flex',
@@ -21,3 +21,21 @@ export const counts = style({
   fontSize: vars.text.sm,
   color: vars.color.muted
 })
+
+/** Вход в справку по клавишам: без него о ней никто не узнает. */
+export const hint = style([
+  press,
+  focusRing,
+  {
+    width: '24px',
+    height: '24px',
+    borderRadius: vars.radius.pill,
+    background: vars.color.tone,
+    color: vars.color.muted,
+    fontSize: vars.text.sm,
+    transition: `background-color ${vars.motion.quick} ease, color ${vars.motion.quick} ease`,
+    selectors: {
+      '&:hover': { background: vars.color.toneStrong, color: vars.color.text }
+    }
+  }
+])

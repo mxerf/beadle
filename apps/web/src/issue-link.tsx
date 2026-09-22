@@ -30,6 +30,9 @@ export function IssueRoute({
       search={search}
       className={className}
       title={title}
+      // Метка для перехода по задачам с клавиатуры: `j` и `k` переставляют
+      // фокус между помеченными ссылками в любом виде.
+      data-issue-row=""
     >
       {children}
     </Link>

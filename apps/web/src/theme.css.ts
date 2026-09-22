@@ -40,7 +40,15 @@ export const vars = createGlobalTheme(':root', {
     danger: 'oklch(0.6 0.2 25)',
     dangerSoft: 'oklch(0.65 0.2 25 / 13%)',
     info: 'oklch(0.6 0.15 235)',
-    infoSoft: 'oklch(0.65 0.15 235 / 14%)'
+    infoSoft: 'oklch(0.65 0.15 235 / 14%)',
+
+    /**
+     * Тёмный остров: третье правило системы — то, что всплывает над
+     * содержимым, берёт обратный контраст, а не полупрозрачную подложку.
+     */
+    island: 'oklch(0.25 0.01 80)',
+    islandText: 'oklch(0.97 0.004 80)',
+    islandFaint: 'oklch(0.72 0.008 80)'
   },
   space: {
     '1': '4px',

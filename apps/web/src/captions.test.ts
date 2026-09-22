@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  formatAgo,
   formatDuration,
   plural,
   STATUSES,
@@ -46,5 +47,24 @@ describe('formatDuration', () => {
     [720, '1,5 дн']
   ])('%i минут → %s', (minutes, expected) => {
     expect(formatDuration(minutes)).toBe(expected)
+  })
+})
+
+describe('formatAgo', () => {
+  it('свежее полминуты — «только что», а не «0 минут назад»', () => {
+    expect(formatAgo(0)).toBe('только что')
+    expect(formatAgo(44_000)).toBe('только что')
+  })
+
+  it('склоняет минуты, часы и дни', () => {
+    expect(formatAgo(60_000)).toBe('1 минуту назад')
+    expect(formatAgo(3 * 60_000)).toBe('3 минуты назад')
+    expect(formatAgo(20 * 60_000)).toBe('20 минут назад')
+    expect(formatAgo(2 * 3_600_000)).toBe('2 часа назад')
+    expect(formatAgo(50 * 3_600_000)).toBe('2 дня назад')
+  })
+
+  it('отрицательное время не показывает будущим', () => {
+    expect(formatAgo(-5000)).toBe('только что')
   })
 })
