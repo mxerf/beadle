@@ -27,6 +27,23 @@ export class BdError extends Error {
 }
 
 /**
+ * С флагом `--json` промах `bd` объясняет в самом ответе — `{"error": …}` —
+ * и при этом выходит с ненулевым кодом. Такой выход не авария процесса,
+ * а ответ: несуществующий номер задачи должен стать 404, а не 502.
+ */
+function jsonFromFailure(cause: unknown): string | undefined {
+  if (typeof cause !== 'object' || cause === null) {
+    return undefined
+  }
+  const { stdout } = cause as { stdout?: unknown }
+  if (typeof stdout !== 'string') {
+    return undefined
+  }
+  const trimmed = stdout.trim()
+  return trimmed.startsWith('{') || trimmed.startsWith('[') ? stdout : undefined
+}
+
+/**
  * Запускает `bd` в каталоге проекта и возвращает разобранный JSON.
  *
  * @param cwd Корень воркспейса — от него `bd` находит свой `.beads`.
@@ -48,8 +65,16 @@ export async function runBdJson(
     })
     stdout = result.stdout
   } catch (cause) {
-    const reason = cause instanceof Error ? cause.message : String(cause)
-    throw new BdError(`bd ${args.join(' ')} не отработал: ${reason}`, cwd, args)
+    const answered = jsonFromFailure(cause)
+    if (answered === undefined) {
+      const reason = cause instanceof Error ? cause.message : String(cause)
+      throw new BdError(
+        `bd ${args.join(' ')} не отработал: ${reason}`,
+        cwd,
+        args
+      )
+    }
+    stdout = answered
   }
 
   try {
