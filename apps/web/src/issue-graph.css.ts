@@ -1,6 +1,6 @@
 import { style } from '@vanilla-extract/css'
 
-import { focusRing, lift, vars } from './theme.css.ts'
+import { focusRing, lift, media, vars } from './theme.css.ts'
 
 export const graph = style({
   display: 'grid',
@@ -25,7 +25,11 @@ export const component = style({
   padding: vars.space[3],
   borderRadius: vars.radius.lg,
   background: vars.color.surface,
-  overflowX: 'auto'
+  overflowX: 'auto',
+  '@media': {
+    // Шаг встаёт на место сам: листать цепочку пальцем точнее, чем целиться.
+    [media.phone]: { scrollSnapType: 'x mandatory', gap: vars.space[3] }
+  }
 })
 
 /** Колонка — шаг. Задачи внутри шага друг друга не ждут. */
@@ -34,7 +38,8 @@ export const step = style({
   flexShrink: 0,
   flexDirection: 'column',
   gap: vars.space[2],
-  width: '230px'
+  width: '230px',
+  '@media': { [media.phone]: { width: '78vw', scrollSnapAlign: 'start' } }
 })
 
 export const stepName = style({

@@ -1,6 +1,6 @@
 import { globalStyle, style } from '@vanilla-extract/css'
 
-import { vars } from './theme.css.ts'
+import { media, vars } from './theme.css.ts'
 
 /**
  * Разметка приходит из описаний задач — их пишут люди и агенты, и там
@@ -75,7 +75,13 @@ globalStyle(`${body} table`, {
   width: '100%',
   margin: `0 0 ${vars.space[3]}`,
   borderCollapse: 'collapse',
-  fontSize: vars.text.sm
+  fontSize: vars.text.sm,
+  '@media': {
+    // Таблица шире экрана прокручивается внутри себя, а не растягивает
+    // страницу. Только на телефоне: `block` отбирает у таблицы выравнивание
+    // колонок по всей ширине, и на большом экране это заметно.
+    [media.phone]: { display: 'block', overflowX: 'auto' }
+  }
 })
 
 globalStyle(`${body} th, ${body} td`, {

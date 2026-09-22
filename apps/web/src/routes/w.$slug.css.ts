@@ -1,20 +1,25 @@
 import { style } from '@vanilla-extract/css'
 
-import { focusRing, press, vars } from '../theme.css.ts'
+import { focusRing, media, press, vars } from '../theme.css.ts'
 
 export const head = style({
   display: 'flex',
   flexWrap: 'wrap',
   alignItems: 'baseline',
   gap: vars.space[3],
-  marginBottom: vars.space[4]
+  marginBottom: vars.space[4],
+  '@media': {
+    [media.phone]: { gap: vars.space[2], marginBottom: vars.space[3] }
+  }
 })
 
 export const name = style({
   margin: 0,
   fontSize: vars.text.xl,
   fontWeight: 600,
-  letterSpacing: '-0.01em'
+  letterSpacing: '-0.01em',
+  // Крупный заголовок съедает экран, на котором и так помещается пять задач.
+  '@media': { [media.phone]: { fontSize: vars.text.lg } }
 })
 
 export const counts = style({
@@ -22,11 +27,15 @@ export const counts = style({
   color: vars.color.muted
 })
 
-/** Вход в справку по клавишам: без него о ней никто не узнает. */
+/**
+ * Вход в справку по клавишам: без него о ней никто не узнает. На телефоне
+ * прячется — клавиш там нет, а место есть не всегда.
+ */
 export const hint = style([
   press,
   focusRing,
   {
+    '@media': { [media.phone]: { display: 'none' } },
     width: '24px',
     height: '24px',
     borderRadius: vars.radius.pill,

@@ -12,6 +12,24 @@ import { chip } from './chip.css.ts'
 import * as styles from './issue-filters.css.ts'
 import { type IssueSearch, toFlag, toggleValue, toValues } from './search.ts'
 
+/** Значения фильтров человеческими словами — для свёрнутой панели. */
+const VALUE_CAPTIONS: Record<string, string> = {
+  ...statusCaption,
+  ...typeCaption
+}
+
+function activeCaptions(search: IssueSearch): string[] {
+  const named = [...toValues(search.status), ...toValues(search.type)].map(
+    (value) => VALUE_CAPTIONS[value] ?? value
+  )
+  const priorities = toValues(search.priority).map((value) =>
+    priorityCaption(Number(value))
+  )
+  const ready = toFlag(search.ready) ? ['можно брать'] : []
+
+  return [...named, ...priorities, ...ready]
+}
+
 /** Пауза перед тем, как строка поиска уедет в адрес и в запрос. */
 const TYPING_PAUSE_MS = 300
 
@@ -27,44 +45,56 @@ type Props = {
 
 export function IssueFilters({ search, onChange, onReset }: Props) {
   const text = useSearchText(search.search, onChange)
+  const [open, setOpen] = useState(false)
+  const active = activeCaptions(search)
 
   return (
     <div className={styles.bar}>
-      <Group
-        values={toValues(search.status)}
-        options={STATUSES.map((value) => [value, statusCaption[value]])}
-        onToggle={(value) =>
-          onChange({ status: toggleValue(search.status, value) })
-        }
-      />
-      <Group
-        values={toValues(search.type)}
-        options={TYPES.map((value) => [value, typeCaption[value]])}
-        onToggle={(value) =>
-          onChange({ type: toggleValue(search.type, value) })
-        }
-      />
-      <Group
-        values={toValues(search.priority)}
-        options={PRIORITIES.map((value) => [
-          String(value),
-          priorityCaption(value)
-        ])}
-        onToggle={(value) =>
-          onChange({ priority: toggleValue(search.priority, value) })
-        }
-      />
-      <div className={styles.group}>
-        <button
-          type="button"
-          className={chip[toFlag(search.ready) ? 'on' : 'off']}
-          aria-pressed={toFlag(search.ready)}
-          onClick={() =>
-            onChange({ ready: toFlag(search.ready) ? undefined : '1' })
+      <button
+        type="button"
+        className={styles.toggle}
+        aria-expanded={open}
+        onClick={() => setOpen((shown) => !shown)}
+      >
+        {active.length > 0 ? active.join(' · ') : 'Фильтры'}
+      </button>
+      <div className={styles.groups[open ? 'open' : 'shut']}>
+        <Group
+          values={toValues(search.status)}
+          options={STATUSES.map((value) => [value, statusCaption[value]])}
+          onToggle={(value) =>
+            onChange({ status: toggleValue(search.status, value) })
           }
-        >
-          можно брать
-        </button>
+        />
+        <Group
+          values={toValues(search.type)}
+          options={TYPES.map((value) => [value, typeCaption[value]])}
+          onToggle={(value) =>
+            onChange({ type: toggleValue(search.type, value) })
+          }
+        />
+        <Group
+          values={toValues(search.priority)}
+          options={PRIORITIES.map((value) => [
+            String(value),
+            priorityCaption(value)
+          ])}
+          onToggle={(value) =>
+            onChange({ priority: toggleValue(search.priority, value) })
+          }
+        />
+        <div className={styles.group}>
+          <button
+            type="button"
+            className={chip[toFlag(search.ready) ? 'on' : 'off']}
+            aria-pressed={toFlag(search.ready)}
+            onClick={() =>
+              onChange({ ready: toFlag(search.ready) ? undefined : '1' })
+            }
+          >
+            можно брать
+          </button>
+        </div>
       </div>
       <input
         className={styles.search}

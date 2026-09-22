@@ -1,6 +1,6 @@
 import { style } from '@vanilla-extract/css'
 
-import { focusRing, lift, vars } from './theme.css.ts'
+import { focusRing, lift, media, vars } from './theme.css.ts'
 
 /** Поток островков: между группами воздух, сами они — карточки. */
 export const islands = style({
@@ -26,7 +26,19 @@ export const list = style({
   // уместиться внутри карточки, а не свисать с её края.
   padding: `${vars.space[2]} ${vars.space[4]}`,
   borderRadius: vars.radius.lg,
-  background: vars.color.card
+  background: vars.color.card,
+  '@media': {
+    /*
+     * Семь колонок в 390 точек не помещаются, и первым схлопывается
+     * заголовок: в ширину `minmax(0, 1fr)` он ужимается до нуля, и список
+     * показывает всё, кроме того, ради чего его открыли. Поэтому на телефоне
+     * строка перестаёт быть строкой таблицы.
+     */
+    [media.phone]: {
+      gridTemplateColumns: 'minmax(0, 1fr)',
+      padding: `${vars.space[1]} ${vars.space[2]}`
+    }
+  }
 })
 
 /** Наведение не красит строку, а поднимает её над соседними. */
@@ -43,9 +55,19 @@ export const row = style([
     // и жмётся к соседям, здесь она сама по себе и просит воздуха.
     padding: `${vars.space[2]} ${vars.space[2]}`,
     borderRadius: vars.radius.md,
-    // Подложка поднятой строки обязана быть плотной: сквозь прозрачную
-    // просвечивают соседние.
-    selectors: { '&:hover': { background: vars.color.card } }
+    '@media': {
+      // Подложка поднятой строки обязана быть плотной: сквозь прозрачную
+      // просвечивают соседние. Наведение — только там, где есть курсор.
+      [media.hover]: {
+        selectors: { '&:hover': { background: vars.color.card } }
+      },
+      [media.phone]: {
+        gridTemplateColumns: 'minmax(0, 1fr) auto',
+        alignItems: 'start',
+        gap: vars.space[2],
+        padding: vars.space[2]
+      }
+    }
   }
 ])
 
@@ -62,7 +84,18 @@ export const rowLink = style([
     gridTemplateColumns: 'subgrid',
     alignItems: 'center',
     gap: vars.space[3],
-    borderRadius: vars.radius.md
+    borderRadius: vars.radius.md,
+    '@media': {
+      // Метки перетекают под заголовок сами: порядок в разметке колоночный,
+      // и заголовок вытаскивается наверх, а не переставляется в коде.
+      [media.phone]: {
+        display: 'flex',
+        flexWrap: 'wrap',
+        alignItems: 'center',
+        gap: vars.space[2],
+        gridColumn: '1'
+      }
+    }
   }
 ])
 
@@ -73,7 +106,21 @@ export const title = style({
   minWidth: 0,
   overflow: 'hidden',
   textOverflow: 'ellipsis',
-  whiteSpace: 'nowrap'
+  whiteSpace: 'nowrap',
+  '@media': {
+    // Целая строка под себя и два ряда текста: на телефоне заголовок —
+    // единственное, что читают, и обрывать его многоточием жалко.
+    [media.phone]: {
+      order: -1,
+      flexBasis: '100%',
+      display: '-webkit-box',
+      WebkitBoxOrient: 'vertical',
+      WebkitLineClamp: 2,
+      whiteSpace: 'normal',
+      textOverflow: 'clip',
+      lineHeight: 1.35
+    }
+  }
 })
 
 export const closed = style({ color: vars.color.muted })
@@ -82,7 +129,19 @@ export const closed = style({ color: vars.color.muted })
 export const assignee = style({
   justifySelf: 'end',
   fontSize: vars.text.sm,
-  color: vars.color.faint
+  color: vars.color.faint,
+  '@media': {
+    // В колонке пустое место незаметно, в строке метками — это лишний
+    // промежуток посреди ряда.
+    [media.phone]: { selectors: { '&:empty': { display: 'none' } } }
+  }
+})
+
+/** Ячейка под признак блокировки: у большинства задач она пустая. */
+export const flag = style({
+  '@media': {
+    [media.phone]: { selectors: { '&:empty': { display: 'none' } } }
+  }
 })
 
 /**
@@ -104,7 +163,15 @@ export const groupHead = style({
   gridColumn: '1 / -1',
   marginInline: `calc(-1 * ${vars.space[4]})`,
   padding: `${vars.space[1]} ${vars.space[4]} ${vars.space[2]}`,
-  background: vars.color.card
+  background: vars.color.card,
+  '@media': {
+    // Поля карточки на телефоне другие — отрицательные поля обязаны совпасть
+    // с ними, иначе строки поедут сквозь заголовок по краям.
+    [media.phone]: {
+      marginInline: `calc(-1 * ${vars.space[2]})`,
+      padding: `${vars.space[1]} ${vars.space[2]} ${vars.space[2]}`
+    }
+  }
 })
 
 export const groupCaption = style({

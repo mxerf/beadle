@@ -104,6 +104,17 @@ export const vars = createGlobalTheme(':root', {
   }
 })
 
+/**
+ * Телефон — не «узкий монитор». Там нет курсора, а значит и наведения:
+ * `:hover` на касании залипает после нажатия, и строка остаётся поднятой,
+ * пока не тронешь другую. Поэтому подъём включается только там, где курсор
+ * есть на самом деле.
+ */
+export const media = {
+  phone: 'screen and (max-width: 640px)',
+  hover: '(hover: hover)'
+} as const
+
 /** Нажатие отзывается масштабом — это основной отклик системы. */
 export const press = {
   transition: `background-color ${vars.motion.quick} ease, color ${vars.motion.quick} ease, scale ${vars.motion.quick} ease`,
@@ -120,11 +131,15 @@ export const press = {
  */
 export const lift = {
   transition: `scale ${vars.motion.spring} ${vars.motion.springEase}, box-shadow ${vars.motion.quick} ease`,
-  selectors: {
-    '&:hover': {
-      zIndex: 1,
-      scale: '1.008',
-      boxShadow: vars.shadow.raise
+  '@media': {
+    [media.hover]: {
+      selectors: {
+        '&:hover': {
+          zIndex: 1,
+          scale: '1.008',
+          boxShadow: vars.shadow.raise
+        }
+      }
     }
   }
 } as const

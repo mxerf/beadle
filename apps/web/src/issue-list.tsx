@@ -110,7 +110,7 @@ function IssueRow({ issue }: { issue: IssueView }) {
           {issue.title}
         </span>
         <span className={styles.assignee}>{issue.assignee ?? ''}</span>
-        <span>
+        <span className={styles.flag}>
           <Held ids={issue.blocked_by} />
         </span>
         <span className={tag.tone[statusTone[issue.status]]}>

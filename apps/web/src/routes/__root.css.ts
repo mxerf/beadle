@@ -1,6 +1,6 @@
 import { style } from '@vanilla-extract/css'
 
-import { focusRing, press, vars } from '../theme.css.ts'
+import { focusRing, media, press, vars } from '../theme.css.ts'
 
 export const shell = style({
   display: 'flex',
@@ -14,6 +14,9 @@ export const header = style({
   gap: vars.space[3],
   padding: `${vars.space[4]} ${vars.space[5]} ${vars.space[2]}`,
   margin: '0 auto',
+  '@media': {
+    [media.phone]: { padding: `${vars.space[3]} ${vars.space[4]} 0` }
+  },
   width: '100%',
   maxWidth: '1100px'
 })
@@ -39,6 +42,11 @@ export const main = style({
   flex: 1,
   padding: `${vars.space[3]} ${vars.space[5]} ${vars.space[6]}`,
   margin: '0 auto',
+  '@media': {
+    [media.phone]: {
+      padding: `${vars.space[3]} ${vars.space[3]} ${vars.space[6]}`
+    }
+  },
   width: '100%',
   maxWidth: '1100px'
 })

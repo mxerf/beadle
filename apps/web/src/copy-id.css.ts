@@ -1,6 +1,6 @@
 import { style, styleVariants } from '@vanilla-extract/css'
 
-import { focusRing, press, vars } from './theme.css.ts'
+import { focusRing, media, press, vars } from './theme.css.ts'
 
 /**
  * Номер задачи — кнопка: его копируют, чтобы отдать `bd` в терминале или
@@ -15,6 +15,10 @@ const base = style([
   focusRing,
   {
     padding: `2px ${vars.space[1]}`,
+    // Палец не попадает в строчку текста высотой в тринадцать точек.
+    '@media': {
+      [media.phone]: { padding: `${vars.space[1]} ${vars.space[2]}` }
+    },
     borderRadius: vars.radius.sm,
     background: 'transparent',
     fontFamily: vars.font.mono,

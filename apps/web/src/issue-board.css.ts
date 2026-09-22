@@ -1,6 +1,6 @@
 import { style } from '@vanilla-extract/css'
 
-import { focusRing, lift, vars } from './theme.css.ts'
+import { focusRing, lift, media, vars } from './theme.css.ts'
 
 export const board = style({
   display: 'grid',
@@ -9,6 +9,21 @@ export const board = style({
   '@media': {
     'screen and (max-width: 900px)': {
       gridTemplateColumns: 'repeat(2, minmax(0, 1fr))'
+    },
+    /*
+     * На телефоне колонка одна на экран, остальные — листанием вбок.
+     * Две колонки по 175 точек не доска, а два столбца обрезанных слов;
+     * край следующей выглядывает, чтобы было видно, что доска не кончилась.
+     */
+    [media.phone]: {
+      gridTemplateColumns: 'none',
+      gridAutoFlow: 'column',
+      gridAutoColumns: '82%',
+      overflowX: 'auto',
+      scrollSnapType: 'x mandatory',
+      marginInline: `calc(-1 * ${vars.space[3]})`,
+      paddingInline: vars.space[3],
+      scrollbarWidth: 'none'
     }
   }
 })
@@ -18,6 +33,7 @@ export const column = style({
   display: 'flex',
   flexDirection: 'column',
   minHeight: 0,
+  '@media': { [media.phone]: { scrollSnapAlign: 'start' } },
   padding: vars.space[2],
   borderRadius: vars.radius.lg,
   background: vars.color.surface
