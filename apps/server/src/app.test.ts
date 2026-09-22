@@ -35,6 +35,26 @@ describe('parseFilters', () => {
     }
   })
 
+  it('разбирает флаг обеими записями', () => {
+    expect(parseFilters({ ready: '1' })).toEqual({
+      ok: true,
+      filters: { ready: true }
+    })
+    expect(parseFilters({ ready: 'false' })).toEqual({
+      ok: true,
+      filters: { ready: false }
+    })
+  })
+
+  it('отказывает на флаге, который не да и не нет', () => {
+    const parsed = parseFilters({ ready: 'ага' })
+
+    expect(parsed.ok).toBe(false)
+    if (!parsed.ok) {
+      expect(parsed.fields[0]?.path).toBe('ready')
+    }
+  })
+
   it('называет все непонятные поля разом, а не первое', () => {
     const parsed = parseFilters({ status: 'чушь', type: 'ерунда' })
 

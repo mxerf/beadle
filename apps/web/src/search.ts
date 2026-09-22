@@ -25,7 +25,8 @@ export const issueFilterSearchSchema = z.object({
   label: fromUrl,
   assignee: fromUrl,
   parent: fromUrl,
-  search: fromUrl
+  search: fromUrl,
+  ready: fromUrl
 })
 
 /**
@@ -65,6 +66,15 @@ export function toggleValue(
  * фильтров, и лишнее отсекает она сама: новый параметр показа не просочится
  * в запрос и не разорвёт кеш только потому, что про него забыли здесь.
  */
+/**
+ * Флаг из адреса. Понимает обе записи, потому что сервер понимает обе:
+ * иначе ссылка с `?ready=true` отбирала бы задачи, а таблетка в панели
+ * показывала бы, что отбор выключен.
+ */
+export function toFlag(raw: string | undefined): boolean {
+  return raw === '1' || raw === 'true'
+}
+
 export function toQueryString(search: IssueSearch): string {
   const params = new URLSearchParams()
   for (const [key, value] of Object.entries(

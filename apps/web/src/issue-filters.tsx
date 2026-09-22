@@ -10,7 +10,7 @@ import {
 } from './captions.ts'
 import { chip } from './chip.css.ts'
 import * as styles from './issue-filters.css.ts'
-import { type IssueSearch, toggleValue, toValues } from './search.ts'
+import { type IssueSearch, toFlag, toggleValue, toValues } from './search.ts'
 
 /** Пауза перед тем, как строка поиска уедет в адрес и в запрос. */
 const TYPING_PAUSE_MS = 300
@@ -54,6 +54,18 @@ export function IssueFilters({ search, onChange, onReset }: Props) {
           onChange({ priority: toggleValue(search.priority, value) })
         }
       />
+      <div className={styles.group}>
+        <button
+          type="button"
+          className={chip[toFlag(search.ready) ? 'on' : 'off']}
+          aria-pressed={toFlag(search.ready)}
+          onClick={() =>
+            onChange({ ready: toFlag(search.ready) ? undefined : '1' })
+          }
+        >
+          можно брать
+        </button>
+      </div>
       <input
         className={styles.search}
         value={text.value}

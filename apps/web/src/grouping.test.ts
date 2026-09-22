@@ -17,7 +17,7 @@ function issue(id: string, extra: Partial<IssueView> = {}): IssueView {
     dependency_count: 0,
     dependent_count: 0,
     comment_count: 0,
-    blocked: false,
+    blocked_by: [],
     ...extra
   }
 }

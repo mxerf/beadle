@@ -47,7 +47,8 @@ export function parseFilters(query: Record<string, string>): ParsedFilters {
     label: parseList(query['label']),
     assignee: query['assignee'] || undefined,
     parent: query['parent'] || undefined,
-    search: query['search'] || undefined
+    search: query['search'] || undefined,
+    ready: query['ready'] || undefined
   })
 
   if (parsed.success) {
@@ -86,12 +87,12 @@ export function createApp() {
     try {
       const issues = await readIssues(workspace.path)
       const byId = indexById(issues)
-      const filtered = applyFilters(issues, filters.filters)
 
-      return c.json({
-        workspace,
-        issues: filtered.map((issue) => toView(issue, byId))
-      })
+      // Сначала вид, потом отбор: «готово к работе» спрашивает про
+      // держателей, а их видно только по целому графу.
+      const views = issues.map((issue) => toView(issue, byId))
+
+      return c.json({ workspace, issues: applyFilters(views, filters.filters) })
     } catch (error) {
       if (error instanceof BdError) {
         return c.json({ error: 'bd_failed', message: error.message }, 502)

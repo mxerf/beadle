@@ -72,7 +72,7 @@ function IssueCard({ issue }: { issue: IssueView }) {
           <span className={tag.tone.quiet}>
             {typeCaption[issue.issue_type]}
           </span>
-          {issue.blocked ? (
+          {issue.blocked_by.length > 0 ? (
             <span className={tag.tone.danger}>заблокирована</span>
           ) : null}
         </div>

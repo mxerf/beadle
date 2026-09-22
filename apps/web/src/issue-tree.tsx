@@ -110,7 +110,7 @@ function Children({ nodes, matched, progress }: Props) {
                 >
                   {node.issue.title}
                 </span>
-                {node.issue.blocked ? (
+                {node.issue.blocked_by.length > 0 ? (
                   <span className={tag.tone.danger}>заблокирована</span>
                 ) : null}
                 <span className={tag.tone[statusTone[node.issue.status]]}>

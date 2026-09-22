@@ -71,11 +71,13 @@ function WorkspaceLayout() {
   )
 }
 
-function countsCaption(issues: readonly { blocked: boolean }[] | undefined) {
+function countsCaption(
+  issues: readonly { blocked_by: readonly string[] }[] | undefined
+) {
   if (!issues) {
     return ''
   }
-  const blocked = issues.filter((issue) => issue.blocked).length
+  const blocked = issues.filter((issue) => issue.blocked_by.length > 0).length
   const shown = `${issues.length} ${plural(issues.length, 'задача', 'задачи', 'задач')}`
   return blocked > 0 ? `${shown} · ${blocked} заблокировано` : shown
 }

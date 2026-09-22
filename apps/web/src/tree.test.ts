@@ -21,7 +21,7 @@ function issue(
     dependency_count: 0,
     dependent_count: 0,
     comment_count: 0,
-    blocked: false,
+    blocked_by: [],
     ...(parent === undefined ? {} : { parent })
   }
 }

@@ -52,6 +52,26 @@ function Rows({ issues }: { issues: readonly IssueView[] }) {
   return issues.map((issue) => <IssueRow key={issue.id} issue={issue} />)
 }
 
+/**
+ * Кто держит задачу. «Заблокирована» отвечает на вопрос, который человек
+ * задаёт вторым: первым он спрашивает «кем» — и без номера всё равно идёт
+ * на страницу выяснять. Держателей бывает несколько, но в строке помещается
+ * один; остальные — в подсказке.
+ */
+function Held({ ids }: { ids: readonly string[] }) {
+  const first = ids[0]
+  if (!first) {
+    return null
+  }
+
+  return (
+    <span className={tag.tone.danger} title={`Держат: ${ids.join(', ')}`}>
+      ждёт {first}
+      {ids.length > 1 ? ` и ещё ${ids.length - 1}` : ''}
+    </span>
+  )
+}
+
 function GroupHead({ group }: { group: IssueGroup }) {
   const count = group.issues.length
 
@@ -91,9 +111,7 @@ function IssueRow({ issue }: { issue: IssueView }) {
         </span>
         <span className={styles.assignee}>{issue.assignee ?? ''}</span>
         <span>
-          {issue.blocked ? (
-            <span className={tag.tone.danger}>заблокирована</span>
-          ) : null}
+          <Held ids={issue.blocked_by} />
         </span>
         <span className={tag.tone[statusTone[issue.status]]}>
           {statusCaption[issue.status]}

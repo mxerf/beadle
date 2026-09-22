@@ -67,9 +67,9 @@ function matchesSearch(issue: Issue, needle: string): boolean {
 }
 
 export function applyFilters(
-  issues: readonly Issue[],
+  issues: readonly IssueView[],
   filters: IssueFilters
-): Issue[] {
+): IssueView[] {
   return issues.filter((issue) => {
     if (filters.status && !filters.status.includes(issue.status)) {
       return false
@@ -92,28 +92,36 @@ export function applyFilters(
     if (filters.search && !matchesSearch(issue, filters.search)) {
       return false
     }
+    // Готово к работе — открыта и никем не держится. Отложенные и уже взятые
+    // сюда не попадают: вопрос «что брать» задают про свободное.
+    if (filters.ready && !(issue.status === 'open' && !isHeld(issue))) {
+      return false
+    }
     return true
   })
 }
 
 /**
- * Задача заблокирована, если её держит незакрытая связь `blocks`.
- * Статуса `blocked` в базе нет — он выводится из графа, поэтому доска
- * считает его сама, а не ждёт от `bd`.
+ * Кто держит задачу: незакрытые задачи на рёбрах `blocks`. Такого поля
+ * в базе нет — оно выводится из графа, поэтому считается здесь, а не
+ * ждётся от `bd`.
  */
-export function isBlocked(
+export function blockersOf(
   issue: Issue,
   byId: ReadonlyMap<string, Issue>
-): boolean {
-  return issue.dependencies.some((dependency) => {
-    if (dependency.type !== 'blocks') {
-      return false
-    }
-    if (dependency.issue_id !== issue.id) {
-      return false
-    }
-    return byId.get(dependency.depends_on_id)?.status !== 'closed'
-  })
+): string[] {
+  return issue.dependencies
+    .filter(
+      (dependency) =>
+        dependency.type === 'blocks' &&
+        dependency.issue_id === issue.id &&
+        byId.get(dependency.depends_on_id)?.status !== 'closed'
+    )
+    .map((dependency) => dependency.depends_on_id)
+}
+
+function isHeld(issue: IssueView): boolean {
+  return issue.blocked_by.length > 0
 }
 
 export function indexById(issues: readonly Issue[]): Map<string, Issue> {
@@ -131,7 +139,7 @@ export function toView(
 ): IssueView {
   return {
     ...issue,
-    blocked: isBlocked(issue, byId),
+    blocked_by: blockersOf(issue, byId),
     parent_title: issue.parent ? byId.get(issue.parent)?.title : undefined
   }
 }
