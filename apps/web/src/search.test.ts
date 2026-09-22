@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest'
 
-import { toggleValue, toQueryString, toValues } from './search.ts'
+import {
+  issueSearchSchema,
+  toggleValue,
+  toQueryString,
+  toValues
+} from './search.ts'
 
 describe('toValues', () => {
   it('отсутствие параметра — пустой список, а не список из пустой строки', () => {
@@ -50,5 +55,25 @@ describe('toQueryString', () => {
 
   it('сохраняет запятые в списках читаемыми', () => {
     expect(toQueryString({ priority: '0,1' })).toBe('priority=0%2C1')
+  })
+})
+
+describe('issueSearchSchema', () => {
+  it('принимает число: маршрутизатор отдаёт `?priority=0` числом', () => {
+    expect(issueSearchSchema.parse({ priority: 0 })).toEqual({ priority: '0' })
+  })
+
+  it('оставляет список строкой: JSON его не разбирает', () => {
+    expect(issueSearchSchema.parse({ priority: '0,1' })).toEqual({
+      priority: '0,1'
+    })
+  })
+
+  it('число в поиске тоже становится строкой', () => {
+    expect(issueSearchSchema.parse({ search: 42 })).toEqual({ search: '42' })
+  })
+
+  it('пустой адрес остаётся пустым, а не набором «undefined»', () => {
+    expect(issueSearchSchema.parse({})).toEqual({})
   })
 })

@@ -6,14 +6,25 @@ import { z } from 'zod'
  * а не массивом, потому что массив маршрутизатор кодирует в JSON, и ссылка
  * перестаёт читаться человеком — ради читаемых ссылок проект и затеян.
  */
+/**
+ * Значение из адреса. Строкой оно доезжает не всегда: маршрутизатор разбирает
+ * каждый параметр как JSON, и `?priority=0` приходит числом, а `?priority=0,1`
+ * — строкой, потому что JSON его не понял. Без приведения выбор одного
+ * приоритета роняет разбор адреса целиком.
+ */
+const fromUrl = z
+  .union([z.string(), z.number(), z.boolean()])
+  .transform(String)
+  .optional()
+
 export const issueSearchSchema = z.object({
-  status: z.string().optional(),
-  type: z.string().optional(),
-  priority: z.string().optional(),
-  label: z.string().optional(),
-  assignee: z.string().optional(),
-  parent: z.string().optional(),
-  search: z.string().optional()
+  status: fromUrl,
+  type: fromUrl,
+  priority: fromUrl,
+  label: fromUrl,
+  assignee: fromUrl,
+  parent: fromUrl,
+  search: fromUrl
 })
 
 export type IssueSearch = z.infer<typeof issueSearchSchema>

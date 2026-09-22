@@ -1,5 +1,10 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { createRouter, RouterProvider } from '@tanstack/react-router'
+import {
+  createRouter,
+  parseSearchWith,
+  RouterProvider,
+  stringifySearchWith
+} from '@tanstack/react-router'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 
@@ -7,7 +12,20 @@ import { ApiError } from './api.ts'
 import './global.css.ts'
 import { routeTree } from './routeTree.gen.ts'
 
-const router = createRouter({ routeTree })
+/**
+ * Параметры адреса — простые строки, без JSON.
+ *
+ * По умолчанию маршрутизатор гоняет каждое значение через `JSON.parse`
+ * и `JSON.stringify`: `?priority=0` приезжает числом и валит разбор, а строка
+ * `'0'` уезжает обратно как `?priority=%220%22`. Читаемая ссылка — то, ради
+ * чего проект и написан, поэтому разбор заменён на тождественный: адрес
+ * выглядит и передаётся так же, как его принимает сервер.
+ */
+const router = createRouter({
+  routeTree,
+  parseSearch: parseSearchWith((value) => value),
+  stringifySearch: stringifySearchWith(String)
+})
 
 declare module '@tanstack/react-router' {
   interface Register {
