@@ -1,6 +1,8 @@
 import {
   errorResponseSchema,
   type FilterProblem,
+  type IssueDetailResponse,
+  issueDetailResponseSchema,
   type IssuesResponse,
   issuesResponseSchema,
   type Workspace,
@@ -71,6 +73,19 @@ export function issuesQuery(slug: string, search: IssueSearch) {
     queryFn: async (): Promise<IssuesResponse> => {
       const body = await getJson(`/api/w/${slug}/issues?${query}`)
       return issuesResponseSchema.parse(body)
+    }
+  })
+}
+
+/** Подробности одной задачи: отдельный вызов `bd show` на стороне сервера. */
+export function issueQuery(slug: string, id: string) {
+  return queryOptions({
+    queryKey: ['issue', slug, id],
+    queryFn: async (): Promise<IssueDetailResponse> => {
+      const body = await getJson(
+        `/api/w/${slug}/issues/${encodeURIComponent(id)}`
+      )
+      return issueDetailResponseSchema.parse(body)
     }
   })
 }

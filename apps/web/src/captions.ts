@@ -70,7 +70,8 @@ export function plural(
 export const failureCaption: Record<string, string> = {
   bad_filters: 'Фильтр в ссылке не распознан',
   bd_failed: 'bd не ответил',
-  workspace_not_found: 'Такого проекта нет в реестре'
+  workspace_not_found: 'Такого проекта нет в реестре',
+  issue_not_found: 'Такой задачи в проекте нет'
 }
 
 /**
@@ -89,4 +90,36 @@ export function priorityTone(priority: number): TagTone {
     return 'danger'
   }
   return priority === 1 ? 'warning' : 'neutral'
+}
+
+const dateFormat = new Intl.DateTimeFormat('ru-RU', {
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric'
+})
+
+/**
+ * Дата для человека. Нечитаемое значение возвращается как есть: в сводках
+ * `bd` встречается нулевая дата `0001-01-01`, и врать «1 января первого года»
+ * хуже, чем показать то, что пришло.
+ */
+export function formatDate(iso: string): string {
+  const date = new Date(iso)
+  return Number.isNaN(date.getTime()) ? iso : dateFormat.format(date)
+}
+
+/** Оценка приходит минутами, а живёт в голове часами и днями. */
+export function formatDuration(minutes: number): string {
+  if (minutes < 60) {
+    return `${minutes} мин`
+  }
+  const hours = minutes / 60
+  if (hours < 8) {
+    return `${trim(hours)} ч`
+  }
+  return `${trim(hours / 8)} дн`
+}
+
+function trim(value: number): string {
+  return value.toFixed(1).replace(/\.0$/, '').replace('.', ',')
 }

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  formatDuration,
   plural,
   STATUSES,
   statusCaption,
@@ -33,5 +34,17 @@ describe('подписи', () => {
     for (const type of TYPES) {
       expect(typeCaption[type]).toBeTruthy()
     }
+  })
+})
+
+describe('formatDuration', () => {
+  it.each([
+    [30, '30 мин'],
+    [60, '1 ч'],
+    [90, '1,5 ч'],
+    [480, '1 дн'],
+    [720, '1,5 дн']
+  ])('%i минут → %s', (minutes, expected) => {
+    expect(formatDuration(minutes)).toBe(expected)
   })
 })
