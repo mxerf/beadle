@@ -1,5 +1,6 @@
 import { createRootRoute, Link, Outlet } from '@tanstack/react-router'
 
+import { ThemeSwitch } from '../theme-switch.tsx'
 import * as styles from './__root.css.ts'
 
 /**
@@ -15,6 +16,7 @@ function RootLayout() {
         <Link to="/" className={styles.brand}>
           beadle
         </Link>
+        <ThemeSwitch />
       </header>
       <main className={styles.main}>
         <Outlet />

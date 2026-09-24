@@ -11,6 +11,7 @@ export const shell = style({
 export const header = style({
   display: 'flex',
   alignItems: 'center',
+  justifyContent: 'space-between',
   gap: vars.space[3],
   padding: `${vars.space[4]} ${vars.space[5]} ${vars.space[2]}`,
   margin: '0 auto',

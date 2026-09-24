@@ -4,6 +4,17 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>beadle</title>
+    <script>
+      // Выбранная кнопкой тема ставится до первого кадра: иначе тёмная
+      // страница мигнёт светлой, пока грузится приложение. Ключ тот же,
+      // что в src/theme-switch.tsx; тему по системе ставит сам CSS.
+      try {
+        const theme = localStorage.getItem('beadle-theme')
+        if (theme === 'light' || theme === 'dark') {
+          document.documentElement.dataset.theme = theme
+        }
+      } catch {}
+    </script>
   </head>
   <body>
     <div id="root"></div>
