@@ -38,6 +38,7 @@ export function IssueList({
   const statuses = useStatuses()
   const [picked, setPicked] = useState<ReadonlySet<string>>(() => new Set())
   const [open, setOpen] = useState<ReadonlySet<string>>(() => new Set())
+  const [folded, setFolded] = useState<ReadonlySet<string>>(() => new Set())
 
   const groups = grouping
     ? groupIssues(issues, grouping, statusOrder(statuses, issues))
@@ -52,12 +53,21 @@ export function IssueList({
   const chosen = ids.filter((id) => picked.has(id))
 
   const allOpen = ids.length > 0 && ids.every((id) => open.has(id))
+  // Ключ свёрнутой группы несёт измерение: `1` в приоритетах и `1`
+  // где-нибудь ещё — разные группы, и сворачивание не должно переезжать
+  // вместе со сменой группировки.
+  const foldKeys = groups?.map((group) => `${grouping}:${group.key}`) ?? []
+  const allFolded =
+    foldKeys.length > 0 && foldKeys.every((key) => folded.has(key))
 
   const onPick = useCallback((id: string) => {
     setPicked((previous) => toggled(previous, id))
   }, [])
   const onExpand = useCallback((id: string) => {
     setOpen((previous) => toggled(previous, id))
+  }, [])
+  const onFold = useCallback((key: string) => {
+    setFolded((previous) => toggled(previous, key))
   }, [])
   const state: RowState = { picked, open, onPick, onExpand }
 
@@ -66,6 +76,18 @@ export function IssueList({
       <div className={styles.toolbar}>
         <GroupSwitch value={grouping} onPick={onGroup} />
         <div className={styles.actions}>
+          {groups ? (
+            <button
+              type="button"
+              className={chip[allFolded ? 'on' : 'off']}
+              aria-pressed={allFolded}
+              onClick={() =>
+                setFolded(allFolded ? new Set() : new Set(foldKeys))
+              }
+            >
+              Свернуть группы
+            </button>
+          ) : null}
           <button
             type="button"
             className={chip[allOpen ? 'on' : 'off']}
@@ -79,12 +101,20 @@ export function IssueList({
       </div>
       {groups ? (
         <div className={styles.islands}>
-          {groups.map((group) => (
-            <section key={group.key} className={styles.list}>
-              <GroupHead group={group} />
-              <Rows issues={group.issues} state={state} />
-            </section>
-          ))}
+          {groups.map((group) => {
+            const key = `${grouping}:${group.key}`
+            const shut = folded.has(key)
+            return (
+              <section key={group.key} className={styles.list}>
+                <GroupHead
+                  group={group}
+                  folded={shut}
+                  onFold={() => onFold(key)}
+                />
+                {shut ? null : <Rows issues={group.issues} state={state} />}
+              </section>
+            )
+          })}
         </div>
       ) : (
         <div className={styles.list}>
@@ -209,11 +239,35 @@ function Held({ ids }: { ids: readonly string[] }) {
   )
 }
 
-function GroupHead({ group }: { group: IssueGroup }) {
+/**
+ * Заголовок группы сворачивает её до себя: в группировке по эпикам
+ * их десятки, и чтобы дойти до нужного, остальные убирают с дороги.
+ * Заголовок эпика — ссылка на него, поэтому сворачивает шеврон, а не он.
+ */
+function GroupHead({
+  group,
+  folded,
+  onFold
+}: {
+  group: IssueGroup
+  folded: boolean
+  onFold: () => void
+}) {
   const count = group.issues.length
 
   return (
     <div className={styles.groupHead}>
+      <button
+        type="button"
+        className={styles.expand}
+        aria-expanded={!folded}
+        title={folded ? 'Развернуть группу' : 'Свернуть группу'}
+        onClick={onFold}
+      >
+        <svg {...CHEVRON} className={styles.chevron[folded ? 'shut' : 'open']}>
+          <path d="m9 6 6 6-6 6" />
+        </svg>
+      </button>
       {group.issueId ? (
         <IssueRoute id={group.issueId} className={styles.groupLink}>
           {group.caption}

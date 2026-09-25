@@ -294,7 +294,7 @@ export const groupHead = style({
   top: 0,
   zIndex: 2,
   display: 'flex',
-  alignItems: 'baseline',
+  alignItems: 'center',
   gap: vars.space[2],
   gridColumn: '1 / -1',
   marginInline: `calc(-1 * ${vars.space[4]})`,
