@@ -1,27 +1,39 @@
 import {
-  type IssueStatus,
-  issueStatusSchema,
   type IssueType,
-  issueTypeSchema
+  issueTypeSchema,
+  type StatusCategory
 } from '@beadle/protocol'
 
 import type { TagTone } from './tag.css.ts'
 
 /**
  * Подписи к значениям контракта. Списки берутся из схем, а не переписываются
- * руками: новый статус в beads должен проявиться в фильтрах сам, а не через
- * забытую константу.
+ * руками: новый тип в beads должен проявиться в фильтрах сам, а не через
+ * забытую константу. Статусов в схеме нет вовсе — их словарь у каждого
+ * проекта свой и приезжает с сервера.
  */
 
-export const STATUSES = issueStatusSchema.options
 export const TYPES = issueTypeSchema.options
 export const PRIORITIES = [0, 1, 2, 3, 4] as const
 
-export const statusCaption: Record<IssueStatus, string> = {
+/** Встроенные статусы `bd` по-русски. */
+const BUILT_IN_STATUS_CAPTION: Readonly<Record<string, string>> = {
   open: 'открыта',
   in_progress: 'в работе',
+  blocked: 'заблокирована',
   deferred: 'отложена',
-  closed: 'закрыта'
+  closed: 'закрыта',
+  pinned: 'закреплена',
+  hooked: 'у агента'
+}
+
+/**
+ * Свой статус проекта переводить не на что: его имя придумал человек, и оно
+ * же набирается в `bd update -s`. Показывается как есть, только
+ * подчёркивания становятся пробелами — `awaiting_prod` → «awaiting prod».
+ */
+export function statusCaption(name: string): string {
+  return BUILT_IN_STATUS_CAPTION[name] ?? name.replaceAll('_', ' ')
 }
 
 export const typeCaption: Record<IssueType, string> = {
@@ -78,12 +90,21 @@ export const failureCaption: Record<string, string> = {
 /**
  * Тон тега по значению. Живёт рядом с подписями, а не в стилях: это решение
  * о смысле («P0 — тревога, закрытая задача — успех»), а не о цвете.
+ *
+ * Статус окрашивается по категории, а не по имени: так свой статус проекта
+ * получает цвет того, что он значит, без записи о нём здесь. Статус, которого
+ * нет в словаре, — серый: что он значит, неизвестно.
  */
-export const statusTone: Record<IssueStatus, TagTone> = {
-  open: 'info',
-  in_progress: 'warning',
-  deferred: 'neutral',
-  closed: 'brand'
+const categoryTone: Record<StatusCategory, TagTone> = {
+  active: 'info',
+  wip: 'warning',
+  unspecified: 'neutral',
+  frozen: 'neutral',
+  done: 'brand'
+}
+
+export function statusTone(category: StatusCategory | undefined): TagTone {
+  return category ? categoryTone[category] : 'neutral'
 }
 
 export function priorityTone(priority: number): TagTone {

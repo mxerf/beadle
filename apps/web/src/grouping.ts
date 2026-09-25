@@ -1,8 +1,4 @@
-import {
-  type IssueView,
-  issueStatusSchema,
-  issueTypeSchema
-} from '@beadle/protocol'
+import { type IssueView, issueTypeSchema } from '@beadle/protocol'
 
 import {
   PRIORITIES,
@@ -48,9 +44,14 @@ export function toGrouping(raw: string | undefined): Grouping | undefined {
   return GROUPINGS.find((grouping) => grouping === raw)
 }
 
-/** Порядок групп — порядок самого измерения, а не алфавит подписей. */
-const DIMENSION: Record<Exclude<Grouping, 'epic'>, readonly string[]> = {
-  status: issueStatusSchema.options,
+/**
+ * Порядок групп — порядок самого измерения, а не алфавит подписей. Статусов
+ * здесь нет: их порядок у каждого проекта свой и приходит из словаря.
+ */
+const DIMENSION: Record<
+  Exclude<Grouping, 'epic' | 'status'>,
+  readonly string[]
+> = {
   priority: PRIORITIES.map(String),
   type: issueTypeSchema.options
 }
@@ -64,7 +65,7 @@ const HEAD: Record<Grouping, (issue: IssueView) => Omit<IssueGroup, 'issues'>> =
   {
     status: (issue) => ({
       key: issue.status,
-      caption: statusCaption[issue.status]
+      caption: statusCaption(issue.status)
     }),
     priority: (issue) => ({
       key: String(issue.priority),
@@ -86,9 +87,13 @@ const HEAD: Record<Grouping, (issue: IssueView) => Omit<IssueGroup, 'issues'>> =
         : { key: '', caption: 'Без эпика' }
   }
 
+/** Значение, которого нет в порядке, уходит в конец, а не прыгает в начало. */
 function byDimension(order: readonly string[]) {
-  return (a: IssueGroup, b: IssueGroup): number =>
-    order.indexOf(a.key) - order.indexOf(b.key)
+  const rank = (key: string): number => {
+    const index = order.indexOf(key)
+    return index === -1 ? order.length : index
+  }
+  return (a: IssueGroup, b: IssueGroup): number => rank(a.key) - rank(b.key)
 }
 
 /**
@@ -101,9 +106,11 @@ function byLeader(a: IssueGroup, b: IssueGroup): number {
   return first && second ? byImportance(first, second) : 0
 }
 
+/** @param statuses Порядок статусов проекта — для группировки по статусу. */
 export function groupIssues(
   issues: readonly IssueView[],
-  grouping: Grouping
+  grouping: Grouping,
+  statuses: readonly string[]
 ): IssueGroup[] {
   const buckets = new Map<string, IssueGroup>()
 
@@ -122,7 +129,9 @@ export function groupIssues(
     issues: group.issues.toSorted(byImportance)
   }))
 
-  return grouping === 'epic'
-    ? groups.toSorted(byLeader)
-    : groups.toSorted(byDimension(DIMENSION[grouping]))
+  if (grouping === 'epic') {
+    return groups.toSorted(byLeader)
+  }
+  const order = grouping === 'status' ? statuses : DIMENSION[grouping]
+  return groups.toSorted(byDimension(order))
 }

@@ -2,12 +2,21 @@ import { style } from '@vanilla-extract/css'
 
 import { focusRing, lift, media, vars } from './theme.css.ts'
 
+/**
+ * Колонок столько, сколько статусов у проекта. Они делят ширину поровну,
+ * а невлезшие уходят вбок прокруткой, а не вторым рядом: второй ряд рвёт
+ * путь задачи, который читается слева направо. Уже 240 точек колонку
+ * не сжать: карточка перестаёт вмещать теги и переносит номер задачи.
+ */
 export const board = style({
   display: 'grid',
-  gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
+  gridAutoFlow: 'column',
+  gridAutoColumns: 'minmax(240px, 1fr)',
+  overflowX: 'auto',
   gap: vars.space[3],
   '@media': {
     'screen and (max-width: 900px)': {
+      gridAutoFlow: 'row',
       gridTemplateColumns: 'repeat(2, minmax(0, 1fr))'
     },
     /*

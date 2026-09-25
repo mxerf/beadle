@@ -3,6 +3,16 @@ import { describe, expect, it } from 'vitest'
 
 import { groupIssues, toGrouping } from './grouping.ts'
 
+/** Порядок статусов проекта со своими этапами между работой и закрытием. */
+const STATUSES = [
+  'open',
+  'in_progress',
+  'awaiting_staging',
+  'awaiting_prod',
+  'deferred',
+  'closed'
+]
+
 function issue(id: string, extra: Partial<IssueView> = {}): IssueView {
   return {
     id,
@@ -41,7 +51,8 @@ describe('groupIssues', () => {
         issue('b', { status: 'open' }),
         issue('c', { status: 'in_progress' })
       ],
-      'status'
+      'status',
+      STATUSES
     )
 
     expect(groups.map((group) => group.key)).toEqual([
@@ -51,8 +62,38 @@ describe('groupIssues', () => {
     ])
   })
 
+  it('ставит свои статусы проекта на их место в пути задачи', () => {
+    const groups = groupIssues(
+      [
+        issue('a', { status: 'closed' }),
+        issue('b', { status: 'awaiting_prod' }),
+        issue('c', { status: 'awaiting_staging' }),
+        issue('d', { status: 'open' })
+      ],
+      'status',
+      STATUSES
+    )
+
+    expect(groups.map((group) => group.key)).toEqual([
+      'open',
+      'awaiting_staging',
+      'awaiting_prod',
+      'closed'
+    ])
+  })
+
+  it('статус не из словаря уводит в конец, а не в начало', () => {
+    const groups = groupIssues(
+      [issue('a', { status: 'забытый' }), issue('b', { status: 'open' })],
+      'status',
+      STATUSES
+    )
+
+    expect(groups.map((group) => group.key)).toEqual(['open', 'забытый'])
+  })
+
   it('пустых групп не заводит', () => {
-    const groups = groupIssues([issue('a')], 'status')
+    const groups = groupIssues([issue('a')], 'status', STATUSES)
 
     expect(groups).toHaveLength(1)
     expect(groups[0]?.caption).toBe('открыта')
@@ -61,7 +102,8 @@ describe('groupIssues', () => {
   it('внутри группы держит срочное сверху', () => {
     const groups = groupIssues(
       [issue('a', { priority: 3 }), issue('b', { priority: 0 })],
-      'type'
+      'type',
+      STATUSES
     )
 
     expect(groups[0]?.issues.map((one) => one.id)).toEqual(['b', 'a'])
@@ -70,7 +112,8 @@ describe('groupIssues', () => {
   it('называет группу эпика его заголовком, а не номером', () => {
     const groups = groupIssues(
       [issue('a', { parent: 'e1', parent_title: 'Доска и эпики' })],
-      'epic'
+      'epic',
+      STATUSES
     )
 
     expect(groups[0]?.caption).toBe('Доска и эпики')
@@ -78,13 +121,13 @@ describe('groupIssues', () => {
   })
 
   it('без заголовка родителя показывает номер, а не пустоту', () => {
-    const groups = groupIssues([issue('a', { parent: 'e1' })], 'epic')
+    const groups = groupIssues([issue('a', { parent: 'e1' })], 'epic', STATUSES)
 
     expect(groups[0]?.caption).toBe('e1')
   })
 
   it('задачи без эпика собирает отдельной группой без ссылки', () => {
-    const groups = groupIssues([issue('a')], 'epic')
+    const groups = groupIssues([issue('a')], 'epic', STATUSES)
 
     expect(groups[0]?.caption).toBe('Без эпика')
     expect(groups[0]?.issueId).toBeUndefined()
@@ -97,7 +140,8 @@ describe('groupIssues', () => {
         issue('b', { parent: 'e2', parent_title: 'горящий', priority: 0 }),
         issue('c', { priority: 1 })
       ],
-      'epic'
+      'epic',
+      STATUSES
     )
 
     // «Без эпика» — такая же группа, а не хвост списка: срочная задача,

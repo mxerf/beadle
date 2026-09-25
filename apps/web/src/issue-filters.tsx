@@ -3,7 +3,6 @@ import { useEffect, useRef, useState } from 'react'
 import {
   PRIORITIES,
   priorityCaption,
-  STATUSES,
   statusCaption,
   TYPES,
   typeCaption
@@ -11,23 +10,23 @@ import {
 import { chip } from './chip.css.ts'
 import * as styles from './issue-filters.css.ts'
 import { type IssueSearch, toFlag, toggleValue, toValues } from './search.ts'
+import { useStatuses } from './statuses.ts'
+
+/** Тип в адресе — просто строка: непонятый показывается как пришёл. */
+const TYPE_CAPTIONS: Readonly<Record<string, string>> = typeCaption
 
 /** Значения фильтров человеческими словами — для свёрнутой панели. */
-const VALUE_CAPTIONS: Record<string, string> = {
-  ...statusCaption,
-  ...typeCaption
-}
-
 function activeCaptions(search: IssueSearch): string[] {
-  const named = [...toValues(search.status), ...toValues(search.type)].map(
-    (value) => VALUE_CAPTIONS[value] ?? value
+  const statuses = toValues(search.status).map((value) => statusCaption(value))
+  const types = toValues(search.type).map(
+    (value) => TYPE_CAPTIONS[value] ?? value
   )
   const priorities = toValues(search.priority).map((value) =>
     priorityCaption(Number(value))
   )
   const ready = toFlag(search.ready) ? ['можно брать'] : []
 
-  return [...named, ...priorities, ...ready]
+  return [...statuses, ...types, ...priorities, ...ready]
 }
 
 /** Пауза перед тем, как строка поиска уедет в адрес и в запрос. */
@@ -45,6 +44,7 @@ type Props = {
 
 export function IssueFilters({ search, onChange, onReset }: Props) {
   const text = useSearchText(search.search, onChange)
+  const statuses = useStatuses()
   const [open, setOpen] = useState(false)
   const active = activeCaptions(search)
 
@@ -61,7 +61,7 @@ export function IssueFilters({ search, onChange, onReset }: Props) {
       <div className={styles.groups[open ? 'open' : 'shut']}>
         <Group
           values={toValues(search.status)}
-          options={STATUSES.map((value) => [value, statusCaption[value]])}
+          options={statuses.map(({ name }) => [name, statusCaption(name)])}
           onToggle={(value) =>
             onChange({ status: toggleValue(search.status, value) })
           }
@@ -120,6 +120,10 @@ function Group({
   options: ReadonlyArray<readonly [string, string]>
   onToggle: (value: string) => void
 }) {
+  // Пока словарь статусов едет, группа пуста — и пустая оставила бы отступ.
+  if (options.length === 0) {
+    return null
+  }
   return (
     <div className={styles.group}>
       {options.map(([value, caption]) => (

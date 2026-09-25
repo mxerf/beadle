@@ -6,12 +6,13 @@ import { z } from 'zod'
  * в данных, стоит дороже отсутствующего.
  */
 
-export const issueStatusSchema = z.enum([
-  'open',
-  'in_progress',
-  'deferred',
-  'closed'
-])
+/**
+ * Статус — строка, а не перечисление: сверх встроенных `bd` принимает
+ * статусы, заведённые в `status.custom` самого проекта. Закрытый список
+ * молча терял такие задачи — и из списка, и со страницы задачи. Какие
+ * строки допустимы, говорит словарь проекта (`status.ts`), а не контракт.
+ */
+export const issueStatusSchema = z.string().min(1)
 
 export const issueTypeSchema = z.enum([
   'task',

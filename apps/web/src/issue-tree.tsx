@@ -1,14 +1,9 @@
-import {
-  priorityCaption,
-  priorityTone,
-  statusCaption,
-  statusTone,
-  typeCaption
-} from './captions.ts'
+import { priorityCaption, priorityTone, typeCaption } from './captions.ts'
 import { CopyId } from './copy-id.tsx'
 import { IssueRoute } from './issue-link.tsx'
 import * as styles from './issue-tree.css.ts'
 import { byImportance } from './ordering.ts'
+import { StatusTag } from './status-tag.tsx'
 import * as tag from './tag.css.ts'
 import type { IssueNode, Progress } from './tree.ts'
 
@@ -75,9 +70,7 @@ function GroupHead({
         <span className={styles.bar}>
           <span className={styles.barFill} style={{ width: `${done}%` }} />
         </span>
-        <span className={tag.tone[statusTone[node.issue.status]]}>
-          {statusCaption[node.issue.status]}
-        </span>
+        <StatusTag status={node.issue.status} />
       </IssueRoute>
       <CopyId id={node.issue.id} />
     </div>
@@ -113,9 +106,7 @@ function Children({ nodes, matched, progress }: Props) {
                 {node.issue.blocked_by.length > 0 ? (
                   <span className={tag.tone.danger}>заблокирована</span>
                 ) : null}
-                <span className={tag.tone[statusTone[node.issue.status]]}>
-                  {statusCaption[node.issue.status]}
-                </span>
+                <StatusTag status={node.issue.status} />
               </IssueRoute>
               <CopyId id={node.issue.id} />
             </div>

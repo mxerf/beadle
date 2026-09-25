@@ -1,10 +1,12 @@
 import {
   type FilterProblem,
   type IssueFilters,
-  issueFiltersSchema
+  issueFiltersSchema,
+  issueStatusSchema
 } from '@beadle/protocol'
 import { Hono } from 'hono'
 import { streamSSE } from 'hono/streaming'
+import { z } from 'zod'
 
 import { BdError } from './bd.ts'
 import { fingerprint, type LiveSetup, readLiveSetup } from './changes.ts'
@@ -16,6 +18,7 @@ import {
   readIssues,
   toView
 } from './issues.read.ts'
+import { readStatuses } from './statuses.read.ts'
 import { findWorkspace, listWorkspaces } from './workspaces.ts'
 
 /**
@@ -41,9 +44,27 @@ type ParsedFilters =
  * Разбор фильтров из адреса. Нераспознанное значение — отказ, а не пропуск:
  * адрес здесь описывает состояние экрана целиком, и показать список, тихо
  * выбросив непонятную часть адреса, значит соврать о том, что человек видит.
+ *
+ * Статусы сверяются со словарём проекта: у каждого проекта свои, и общего
+ * перечисления, по которому проверить, нет.
+ *
+ * @param statuses Допустимые в проекте статусы.
  */
-export function parseFilters(query: Record<string, string>): ParsedFilters {
-  const parsed = issueFiltersSchema.safeParse({
+export function parseFilters(
+  query: Record<string, string>,
+  statuses: ReadonlySet<string>
+): ParsedFilters {
+  const schema = issueFiltersSchema.extend({
+    status: z
+      .array(
+        issueStatusSchema.refine((name) => statuses.has(name), {
+          error: (issue) => `статуса «${String(issue.input)}» в проекте нет`
+        })
+      )
+      .optional()
+  })
+
+  const parsed = schema.safeParse({
     status: parseList(query['status']),
     type: parseList(query['type']),
     priority: parseList(query['priority'])?.map(Number),
@@ -92,15 +113,28 @@ export function createApp(web?: WebHandler) {
       return c.json({ error: 'workspace_not_found' }, 404)
     }
 
-    // Фильтры разбираются до обращения к bd: читать весь проект ради
-    // запроса, на который всё равно ответим отказом, незачем.
-    const filters = parseFilters(c.req.query())
-    if (!filters.ok) {
-      return c.json({ error: 'bad_filters', fields: filters.fields }, 400)
-    }
-
     try {
-      const issues = await readIssues(workspace.path)
+      // Словарь и задачи читаются разом, а не по очереди: без словаря
+      // статус в адресе не проверить, а ждать два вызова `bd` подряд
+      // пришлось бы на каждом запросе. Отказ по фильтру редок — чтение
+      // задач впустую в этом случае дешевле.
+      const [statuses, issues] = await Promise.all([
+        readStatuses(workspace.path),
+        readIssues(workspace.path)
+      ])
+
+      // Допустим и статус, который есть у задач, но пропал из словаря:
+      // его убрали из конфига, а задачи остались, и отобрать их всё равно
+      // должно быть можно.
+      const known = new Set([
+        ...statuses.map((status) => status.name),
+        ...issues.map((issue) => issue.status)
+      ])
+      const filters = parseFilters(c.req.query(), known)
+      if (!filters.ok) {
+        return c.json({ error: 'bad_filters', fields: filters.fields }, 400)
+      }
+
       const byId = indexById(issues)
 
       // Сначала вид, потом отбор: «готово к работе» спрашивает про
@@ -108,6 +142,22 @@ export function createApp(web?: WebHandler) {
       const views = issues.map((issue) => toView(issue, byId))
 
       return c.json({ workspace, issues: applyFilters(views, filters.filters) })
+    } catch (error) {
+      if (error instanceof BdError) {
+        return c.json({ error: 'bd_failed', message: error.message }, 502)
+      }
+      throw error
+    }
+  })
+
+  app.get('/api/w/:slug/statuses', async (c) => {
+    const workspace = findWorkspace(c.req.param('slug'))
+    if (!workspace) {
+      return c.json({ error: 'workspace_not_found' }, 404)
+    }
+
+    try {
+      return c.json({ workspace, statuses: await readStatuses(workspace.path) })
     } catch (error) {
       if (error instanceof BdError) {
         return c.json({ error: 'bd_failed', message: error.message }, 502)

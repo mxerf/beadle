@@ -4,8 +4,8 @@ import {
   formatAgo,
   formatDuration,
   plural,
-  STATUSES,
   statusCaption,
+  statusTone,
   TYPES,
   typeCaption
 } from './captions.ts'
@@ -29,12 +29,35 @@ describe('plural', () => {
 
 describe('подписи', () => {
   it('покрывают все значения контракта', () => {
-    for (const status of STATUSES) {
-      expect(statusCaption[status]).toBeTruthy()
-    }
     for (const type of TYPES) {
       expect(typeCaption[type]).toBeTruthy()
     }
+  })
+
+  it('переводят встроенные статусы bd', () => {
+    for (const status of [
+      'open',
+      'in_progress',
+      'blocked',
+      'deferred',
+      'closed',
+      'pinned',
+      'hooked'
+    ]) {
+      expect(statusCaption(status)).not.toBe(status)
+    }
+  })
+
+  it('свой статус проекта показывают его именем', () => {
+    expect(statusCaption('awaiting_prod')).toBe('awaiting prod')
+  })
+})
+
+describe('statusTone', () => {
+  it('красит по категории, а статус без словаря — серым', () => {
+    expect(statusTone('wip')).toBe('warning')
+    expect(statusTone('done')).toBe('brand')
+    expect(statusTone(undefined)).toBe('neutral')
   })
 })
 

@@ -1,8 +1,4 @@
-import {
-  type IssueStatus,
-  issueStatusSchema,
-  type IssueView
-} from '@beadle/protocol'
+import type { IssueView, Status } from '@beadle/protocol'
 
 import {
   priorityCaption,
@@ -14,17 +10,46 @@ import { CopyId } from './copy-id.tsx'
 import * as styles from './issue-board.css.ts'
 import { IssueRoute } from './issue-link.tsx'
 import { byImportance } from './ordering.ts'
+import { statusOrder, useStatuses } from './statuses.ts'
 import * as tag from './tag.css.ts'
 
 /**
+ * Встроенные статусы, колонка которых стоит и пустой. Остальные встроенные
+ * почти не встречаются: `hooked` — для агентов Gas Town, `pinned` — для
+ * вечных задач, `blocked` ставят руками поверх графа. Пустая колонка под
+ * каждый растянула бы доску вдвое, поэтому они появляются, только когда
+ * в них что-то есть. Свои статусы проекта показываются всегда: их завели
+ * нарочно, и пустая колонка этапа — тоже ответ.
+ */
+const ALWAYS_SHOWN = new Set(['open', 'in_progress', 'deferred', 'closed'])
+
+function isShown(
+  name: string,
+  statuses: readonly Status[],
+  issues: readonly IssueView[]
+): boolean {
+  const status = statuses.find((one) => one.name === name)
+  return (
+    ALWAYS_SHOWN.has(name) ||
+    status?.custom === true ||
+    issues.some((issue) => issue.status === name)
+  )
+}
+
+/**
  * Доска: колонки по статусам в том порядке, в каком задача их проходит.
- * Порядок берётся из схемы, а не переписан руками — новый статус в beads
+ * Порядок и сами статусы берутся из словаря проекта: свой статус в beads
  * появится колонкой сам.
  */
 export function IssueBoard({ issues }: { issues: readonly IssueView[] }) {
+  const statuses = useStatuses()
+  const columns = statusOrder(statuses, issues).filter((name) =>
+    isShown(name, statuses, issues)
+  )
+
   return (
     <div className={styles.board}>
-      {issueStatusSchema.options.map((status) => (
+      {columns.map((status) => (
         <Column
           key={status}
           status={status}
@@ -39,13 +64,13 @@ function Column({
   status,
   issues
 }: {
-  status: IssueStatus
+  status: string
   issues: readonly IssueView[]
 }) {
   return (
     <section className={styles.column}>
       <header className={styles.columnHead}>
-        <span className={styles.columnName}>{statusCaption[status]}</span>
+        <span className={styles.columnName}>{statusCaption(status)}</span>
         <span className={styles.columnCount}>{issues.length}</span>
       </header>
       {issues.length === 0 ? (

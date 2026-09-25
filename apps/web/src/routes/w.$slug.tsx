@@ -2,12 +2,14 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, Outlet } from '@tanstack/react-router'
 import { useCallback, useState } from 'react'
 
-import { issuesQuery } from '../api.ts'
+import { issuesQuery, statusesQuery } from '../api.ts'
 import { plural } from '../captions.ts'
 import { useDocumentTitle } from '../document-title.ts'
+import { Failure } from '../failure.tsx'
 import { Hints } from '../hints.tsx'
 import { IssueFilters } from '../issue-filters.tsx'
 import { useLiveUpdates } from '../live.ts'
+import { Notice } from '../notice.tsx'
 import { Refresh } from '../refresh.tsx'
 import { type IssueSearch, issueSearchSchema } from '../search.ts'
 import { useShortcuts } from '../shortcuts.ts'
@@ -36,6 +38,10 @@ function WorkspaceLayout() {
   const { data, isFetching, dataUpdatedAt } = useQuery(
     issuesQuery(slug, search)
   )
+  // Словарь статусов ждут все виды разом: без него доска не знает своих
+  // колонок, а теги — своего цвета, и вид, показанный раньше, перекрасился
+  // бы через миг. Задачи тем временем уже едут — запрос выше.
+  const statuses = useQuery(statusesQuery(slug))
   const queryClient = useQueryClient()
   const live = useLiveUpdates(slug)
   const [hints, setHints] = useState(false)
@@ -66,6 +72,9 @@ function WorkspaceLayout() {
   // поверх половины устаревшего.
   const refresh = useCallback(() => {
     void queryClient.invalidateQueries({ queryKey: ['issues', slug] })
+    // Словарь живому обновлению не виден: правка `status.custom` не трогает
+    // выгрузку задач, и перечитать его можно только отсюда.
+    void queryClient.invalidateQueries({ queryKey: ['statuses', slug] })
   }, [queryClient, slug])
 
   useShortcuts({
@@ -119,7 +128,11 @@ function WorkspaceLayout() {
         <ViewSwitch />
       </header>
       <IssueFilters search={search} onChange={change} onReset={reset} />
-      <Outlet />
+      {statuses.status === 'error' ? (
+        <Failure error={statuses.error} onReset={reset} />
+      ) : null}
+      {statuses.status === 'pending' ? <Notice>Спрашиваю у bd…</Notice> : null}
+      {statuses.status === 'success' ? <Outlet /> : null}
       {hints ? <Hints onClose={() => setHints(false)} /> : null}
     </>
   )

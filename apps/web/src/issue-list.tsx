@@ -4,8 +4,6 @@ import {
   plural,
   priorityCaption,
   priorityTone,
-  statusCaption,
-  statusTone,
   typeCaption
 } from './captions.ts'
 import { CopyId } from './copy-id.tsx'
@@ -13,6 +11,8 @@ import { type Grouping, groupIssues, type IssueGroup } from './grouping.ts'
 import { IssueRoute } from './issue-link.tsx'
 import * as styles from './issue-list.css.ts'
 import { byImportance } from './ordering.ts'
+import { StatusTag } from './status-tag.tsx'
+import { statusOrder, useStatuses } from './statuses.ts'
 import * as tag from './tag.css.ts'
 
 /**
@@ -28,6 +28,8 @@ export function IssueList({
   issues: readonly IssueView[]
   grouping?: Grouping | undefined
 }) {
+  const statuses = useStatuses()
+
   if (!grouping) {
     return (
       <div className={styles.list}>
@@ -36,9 +38,11 @@ export function IssueList({
     )
   }
 
+  const groups = groupIssues(issues, grouping, statusOrder(statuses, issues))
+
   return (
     <div className={styles.islands}>
-      {groupIssues(issues, grouping).map((group) => (
+      {groups.map((group) => (
         <section key={group.key} className={styles.list}>
           <GroupHead group={group} />
           <Rows issues={group.issues} />
@@ -113,9 +117,7 @@ function IssueRow({ issue }: { issue: IssueView }) {
         <span className={styles.flag}>
           <Held ids={issue.blocked_by} />
         </span>
-        <span className={tag.tone[statusTone[issue.status]]}>
-          {statusCaption[issue.status]}
-        </span>
+        <StatusTag status={issue.status} />
       </IssueRoute>
       <CopyId id={issue.id} className={styles.idCell} />
     </div>

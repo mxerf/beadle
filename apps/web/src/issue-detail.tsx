@@ -7,13 +7,12 @@ import {
   formatDuration,
   priorityCaption,
   priorityTone,
-  statusCaption,
-  statusTone,
   typeCaption
 } from './captions.ts'
 import { CopyId } from './copy-id.tsx'
 import * as styles from './issue-detail.css.ts'
 import { Markdown } from './markdown.tsx'
+import { StatusTag } from './status-tag.tsx'
 import * as tag from './tag.css.ts'
 
 /**
@@ -58,9 +57,7 @@ export function IssueDetail({
           <span className={tag.tone.quiet}>
             {typeCaption[issue.issue_type]}
           </span>
-          <span className={tag.tone[statusTone[issue.status]]}>
-            {statusCaption[issue.status]}
-          </span>
+          <StatusTag status={issue.status} />
         </div>
       </header>
 
@@ -221,11 +218,7 @@ function Links({
             {priorityCaption(link.priority)}
           </span>
         )
-        const status = (
-          <span className={tag.tone[statusTone[link.status]]}>
-            {statusCaption[link.status]}
-          </span>
-        )
+        const status = <StatusTag status={link.status} />
         const number = <span className={styles.linkId}>{link.id}</span>
 
         return (

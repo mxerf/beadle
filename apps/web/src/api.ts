@@ -5,6 +5,8 @@ import {
   issueDetailResponseSchema,
   type IssuesResponse,
   issuesResponseSchema,
+  type Status,
+  statusesResponseSchema,
   type Workspace,
   workspacesResponseSchema
 } from '@beadle/protocol'
@@ -73,6 +75,21 @@ export function issuesQuery(slug: string, search: IssueSearch) {
     queryFn: async (): Promise<IssuesResponse> => {
       const body = await getJson(`/api/w/${slug}/issues?${query}`)
       return issuesResponseSchema.parse(body)
+    }
+  })
+}
+
+/**
+ * Словарь статусов проекта: какие есть и в каком порядке задача их проходит.
+ * Отдельным запросом, а не в ответе со списком: он нужен и панели фильтров,
+ * и странице задачи, а меняется реже, чем сами задачи.
+ */
+export function statusesQuery(slug: string) {
+  return queryOptions({
+    queryKey: ['statuses', slug],
+    queryFn: async (): Promise<Status[]> => {
+      const body = await getJson(`/api/w/${slug}/statuses`)
+      return statusesResponseSchema.parse(body).statuses
     }
   })
 }

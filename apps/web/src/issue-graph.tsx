@@ -1,8 +1,9 @@
-import { statusCaption, statusTone, typeCaption } from './captions.ts'
+import { typeCaption } from './captions.ts'
 import { CopyId } from './copy-id.tsx'
 import type { GraphComponent, GraphNode } from './graph.ts'
 import * as styles from './issue-graph.css.ts'
 import { IssueRoute } from './issue-link.tsx'
+import { StatusTag } from './status-tag.tsx'
 import * as tag from './tag.css.ts'
 
 type Props = {
@@ -57,9 +58,7 @@ function Card({
         }
       >
         <div className={styles.tags}>
-          <span className={tag.tone[statusTone[issue.status]]}>
-            {statusCaption[issue.status]}
-          </span>
+          <StatusTag status={issue.status} />
           <span className={tag.tone.quiet}>
             {typeCaption[issue.issue_type]}
           </span>
