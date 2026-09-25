@@ -102,6 +102,25 @@ export const rowLink = style([
 /** Номер прижат к правому краю строки — как и был, пока был подписью. */
 export const idCell = style({ justifySelf: 'end' })
 
+/**
+ * Заголовок и лейблы делят одну ячейку: лейблы идут следом за текстом,
+ * а многоточием обрывается заголовок, а не они. Своя колонка под лейблы
+ * растянулась бы по самому длинному набору и сжала заголовки у всех строк.
+ */
+export const titleCell = style({
+  display: 'flex',
+  alignItems: 'center',
+  gap: vars.space[2],
+  minWidth: 0,
+  '@media': {
+    [media.phone]: {
+      order: -1,
+      flexBasis: '100%',
+      flexWrap: 'wrap'
+    }
+  }
+})
+
 export const title = style({
   minWidth: 0,
   overflow: 'hidden',
@@ -111,7 +130,6 @@ export const title = style({
     // Целая строка под себя и два ряда текста: на телефоне заголовок —
     // единственное, что читают, и обрывать его многоточием жалко.
     [media.phone]: {
-      order: -1,
       flexBasis: '100%',
       display: '-webkit-box',
       WebkitBoxOrient: 'vertical',

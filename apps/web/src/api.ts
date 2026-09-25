@@ -5,6 +5,8 @@ import {
   issueDetailResponseSchema,
   type IssuesResponse,
   issuesResponseSchema,
+  type Label,
+  labelsResponseSchema,
   type Status,
   statusesResponseSchema,
   type Workspace,
@@ -90,6 +92,17 @@ export function statusesQuery(slug: string) {
     queryFn: async (): Promise<Status[]> => {
       const body = await getJson(`/api/w/${slug}/statuses`)
       return statusesResponseSchema.parse(body).statuses
+    }
+  })
+}
+
+/** Лейблы всего проекта со счётом задач — для панели фильтров. */
+export function labelsQuery(slug: string) {
+  return queryOptions({
+    queryKey: ['labels', slug],
+    queryFn: async (): Promise<Label[]> => {
+      const body = await getJson(`/api/w/${slug}/labels`)
+      return labelsResponseSchema.parse(body).labels
     }
   })
 }

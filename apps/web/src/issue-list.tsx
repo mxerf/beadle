@@ -103,15 +103,22 @@ function IssueRow({ issue }: { issue: IssueView }) {
           {priorityCaption(issue.priority)}
         </span>
         <span className={tag.tone.quiet}>{typeCaption[issue.issue_type]}</span>
-        <span
-          className={
-            issue.status === 'closed'
-              ? `${styles.title} ${styles.closed}`
-              : styles.title
-          }
-          title={issue.title}
-        >
-          {issue.title}
+        <span className={styles.titleCell}>
+          <span
+            className={
+              issue.status === 'closed'
+                ? `${styles.title} ${styles.closed}`
+                : styles.title
+            }
+            title={issue.title}
+          >
+            {issue.title}
+          </span>
+          {issue.labels.map((label) => (
+            <span key={label} className={tag.tone.neutral}>
+              {label}
+            </span>
+          ))}
         </span>
         <span className={styles.assignee}>{issue.assignee ?? ''}</span>
         <span className={styles.flag}>

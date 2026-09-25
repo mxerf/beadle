@@ -18,6 +18,7 @@ import {
   readIssues,
   toView
 } from './issues.read.ts'
+import { readLabels } from './labels.read.ts'
 import { readStatuses } from './statuses.read.ts'
 import { findWorkspace, listWorkspaces } from './workspaces.ts'
 
@@ -158,6 +159,22 @@ export function createApp(web?: WebHandler) {
 
     try {
       return c.json({ workspace, statuses: await readStatuses(workspace.path) })
+    } catch (error) {
+      if (error instanceof BdError) {
+        return c.json({ error: 'bd_failed', message: error.message }, 502)
+      }
+      throw error
+    }
+  })
+
+  app.get('/api/w/:slug/labels', async (c) => {
+    const workspace = findWorkspace(c.req.param('slug'))
+    if (!workspace) {
+      return c.json({ error: 'workspace_not_found' }, 404)
+    }
+
+    try {
+      return c.json({ workspace, labels: await readLabels(workspace.path) })
     } catch (error) {
       if (error instanceof BdError) {
         return c.json({ error: 'bd_failed', message: error.message }, 502)

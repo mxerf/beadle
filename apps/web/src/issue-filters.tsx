@@ -1,5 +1,10 @@
+import type { Label } from '@beadle/protocol'
+import { useQuery } from '@tanstack/react-query'
+import { useParams } from '@tanstack/react-router'
+import type { ReactNode } from 'react'
 import { useEffect, useRef, useState } from 'react'
 
+import { labelsQuery } from './api.ts'
 import {
   PRIORITIES,
   priorityCaption,
@@ -9,6 +14,8 @@ import {
 } from './captions.ts'
 import { chip } from './chip.css.ts'
 import * as styles from './issue-filters.css.ts'
+import { WORKSPACE_ROUTE } from './issues-pane.tsx'
+import { pickLabels } from './labels.ts'
 import { type IssueSearch, toFlag, toggleValue, toValues } from './search.ts'
 import { useStatuses } from './statuses.ts'
 
@@ -26,7 +33,13 @@ function activeCaptions(search: IssueSearch): string[] {
   )
   const ready = toFlag(search.ready) ? ['можно брать'] : []
 
-  return [...statuses, ...types, ...priorities, ...ready]
+  return [
+    ...statuses,
+    ...types,
+    ...priorities,
+    ...toValues(search.label),
+    ...ready
+  ]
 }
 
 /** Пауза перед тем, как строка поиска уедет в адрес и в запрос. */
@@ -45,6 +58,8 @@ type Props = {
 export function IssueFilters({ search, onChange, onReset }: Props) {
   const text = useSearchText(search.search, onChange)
   const statuses = useStatuses()
+  const { slug } = useParams({ from: WORKSPACE_ROUTE })
+  const labels = useQuery(labelsQuery(slug)).data ?? NONE
   const [open, setOpen] = useState(false)
   const active = activeCaptions(search)
 
@@ -95,6 +110,15 @@ export function IssueFilters({ search, onChange, onReset }: Props) {
             можно брать
           </button>
         </div>
+        {/* Последними: лейблов у проекта сколько угодно, и перенос их
+            рядов не должен отрывать флаг от приоритетов. */}
+        <LabelGroup
+          labels={labels}
+          values={toValues(search.label)}
+          onToggle={(value) =>
+            onChange({ label: toggleValue(search.label, value) })
+          }
+        />
       </div>
       <input
         className={styles.search}
@@ -114,11 +138,14 @@ export function IssueFilters({ search, onChange, onReset }: Props) {
 function Group({
   values,
   options,
-  onToggle
+  onToggle,
+  children
 }: {
   values: readonly string[]
   options: ReadonlyArray<readonly [string, string]>
   onToggle: (value: string) => void
+  /** То, что стоит в группе после значений: переключатель «ещё». */
+  children?: ReactNode
 }) {
   // Пока словарь статусов едет, группа пуста — и пустая оставила бы отступ.
   if (options.length === 0) {
@@ -137,7 +164,45 @@ function Group({
           {caption}
         </button>
       ))}
+      {children}
     </div>
+  )
+}
+
+const NONE: readonly Label[] = []
+
+function LabelGroup({
+  labels,
+  values,
+  onToggle
+}: {
+  labels: readonly Label[]
+  values: readonly string[]
+  onToggle: (value: string) => void
+}) {
+  const [all, setAll] = useState(false)
+  const { shown } = pickLabels(labels, values, all)
+  // Переключатель нужен, пока свёрнутый вид что-то прячет: после живого
+  // обновления лейблов может стать меньше, и «свернуть» повисло бы впустую.
+  const { hidden } = pickLabels(labels, values, false)
+
+  return (
+    <Group
+      values={values}
+      options={shown.map((name) => [name, name])}
+      onToggle={onToggle}
+    >
+      {hidden > 0 ? (
+        <button
+          type="button"
+          className={chip.off}
+          aria-expanded={all}
+          onClick={() => setAll((open) => !open)}
+        >
+          {all ? 'свернуть' : `ещё ${hidden}`}
+        </button>
+      ) : null}
+    </Group>
   )
 }
 

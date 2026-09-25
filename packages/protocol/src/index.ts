@@ -1,6 +1,7 @@
 export * from './detail.ts'
 export * from './filters.ts'
 export * from './issue.ts'
+export * from './label.ts'
 export * from './response.ts'
 export * from './status.ts'
 export * from './workspace.ts'

@@ -39,6 +39,8 @@ export function useLiveUpdates(slug: string): LiveStatus {
     function onChanged(): void {
       void queryClient.invalidateQueries({ queryKey: ['issues', slug] })
       void queryClient.invalidateQueries({ queryKey: ['issue', slug] })
+      // Лейблы живут на задачах: правка задачи может завести новый.
+      void queryClient.invalidateQueries({ queryKey: ['labels', slug] })
     }
 
     source.addEventListener('ready', onReady)

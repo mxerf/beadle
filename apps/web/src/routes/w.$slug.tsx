@@ -75,6 +75,7 @@ function WorkspaceLayout() {
     // Словарь живому обновлению не виден: правка `status.custom` не трогает
     // выгрузку задач, и перечитать его можно только отсюда.
     void queryClient.invalidateQueries({ queryKey: ['statuses', slug] })
+    void queryClient.invalidateQueries({ queryKey: ['labels', slug] })
   }, [queryClient, slug])
 
   useShortcuts({
