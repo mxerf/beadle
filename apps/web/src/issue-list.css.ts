@@ -1,6 +1,29 @@
 import { style } from '@vanilla-extract/css'
 
-import { focusRing, lift, media, vars } from './theme.css.ts'
+import { focusRing, lift, media, press, vars } from './theme.css.ts'
+
+/**
+ * Над списком одна строка: слева раскладка, справа действия со всем
+ * показанным. На телефоне они расходятся на две — таблетки группировки
+ * там листаются вбок и ширину занимают целиком. Переноса в столбце нет
+ * намеренно: с ним ширина ряда считается по содержимому, и таблетки
+ * распирают страницу вместо того, чтобы листаться.
+ */
+export const toolbar = style({
+  display: 'flex',
+  flexWrap: 'wrap',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  gap: vars.space[2],
+  marginBottom: vars.space[3],
+  '@media': {
+    [media.phone]: {
+      flexDirection: 'column',
+      flexWrap: 'nowrap',
+      alignItems: 'stretch'
+    }
+  }
+})
 
 /** Поток островков: между группами воздух, сами они — карточки. */
 export const islands = style({
@@ -21,7 +44,7 @@ export const islands = style({
  */
 export const list = style({
   display: 'grid',
-  gridTemplateColumns: 'auto auto minmax(0, 1fr) auto auto auto auto',
+  gridTemplateColumns: 'auto auto auto minmax(0, 1fr) auto auto auto auto',
   // Поля те же, что у группы в эпиках: подъём строки со своей тенью должен
   // уместиться внутри карточки, а не свисать с её края.
   padding: `${vars.space[2]} ${vars.space[4]}`,
@@ -29,7 +52,7 @@ export const list = style({
   background: vars.color.card,
   '@media': {
     /*
-     * Семь колонок в 390 точек не помещаются, и первым схлопывается
+     * Восемь колонок в 390 точек не помещаются, и первым схлопывается
      * заголовок: в ширину `minmax(0, 1fr)` он ужимается до нуля, и список
      * показывает всё, кроме того, ради чего его открыли. Поэтому на телефоне
      * строка перестаёт быть строкой таблицы.
@@ -62,7 +85,7 @@ export const row = style([
         selectors: { '&:hover': { background: vars.color.card } }
       },
       [media.phone]: {
-        gridTemplateColumns: 'minmax(0, 1fr) auto',
+        gridTemplateColumns: 'auto minmax(0, 1fr) auto',
         alignItems: 'start',
         gap: vars.space[2],
         padding: vars.space[2]
@@ -72,15 +95,33 @@ export const row = style([
 ])
 
 /**
- * Ссылка занимает строку целиком, кроме последней колонки: там номер,
- * и он кнопка. Колонки — та же подсетка, поэтому ячейки остаются на своих
- * местах; собственных полей у ссылки нет, иначе они сдвинули бы дорожки.
+ * Галочка стоит вне ссылки: внутри неё нажатие уводило бы на страницу
+ * задачи. Цвет — фирменный, как у включённой таблетки.
+ */
+export const pick = style({
+  width: '16px',
+  height: '16px',
+  margin: 0,
+  accentColor: vars.color.primary,
+  cursor: 'pointer',
+  '@media': {
+    // Строка на телефоне выровнена по верху — галочка встаёт вровень
+    // с первой строкой меток, а не с краем карточки.
+    [media.phone]: { marginTop: '4px' }
+  }
+})
+
+/**
+ * Ссылка занимает строку целиком, кроме крайних колонок: слева галочка,
+ * справа номер, и оба — кнопки. Колонки — та же подсетка, поэтому ячейки
+ * остаются на своих местах; собственных полей у ссылки нет, иначе они
+ * сдвинули бы дорожки.
  */
 export const rowLink = style([
   focusRing,
   {
     display: 'grid',
-    gridColumn: '1 / -2',
+    gridColumn: '2 / -2',
     gridTemplateColumns: 'subgrid',
     alignItems: 'center',
     gap: vars.space[3],
@@ -93,7 +134,7 @@ export const rowLink = style([
         flexWrap: 'wrap',
         alignItems: 'center',
         gap: vars.space[2],
-        gridColumn: '1'
+        gridColumn: '2'
       }
     }
   }
@@ -113,11 +154,9 @@ export const titleCell = style({
   gap: vars.space[2],
   minWidth: 0,
   '@media': {
-    [media.phone]: {
-      order: -1,
-      flexBasis: '100%',
-      flexWrap: 'wrap'
-    }
+    // На телефоне ячейки нет: заголовок уезжает наверх, а лейблы встают
+    // в общий ряд меток, а не отдельным рядом под заголовком.
+    [media.phone]: { display: 'contents' }
   }
 })
 
@@ -130,6 +169,7 @@ export const title = style({
     // Целая строка под себя и два ряда текста: на телефоне заголовок —
     // единственное, что читают, и обрывать его многоточием жалко.
     [media.phone]: {
+      order: -1,
       flexBasis: '100%',
       display: '-webkit-box',
       WebkitBoxOrient: 'vertical',
@@ -214,3 +254,62 @@ export const groupCount = style({
   fontSize: vars.text.sm,
   color: vars.color.faint
 })
+
+/**
+ * Выбранное всплывает над списком, поэтому это тёмный остров, как
+ * подсказка с клавишами, — только по центру: подсказка занимает угол.
+ */
+export const picked = style({
+  position: 'fixed',
+  left: '50%',
+  bottom: vars.space[4],
+  transform: 'translateX(-50%)',
+  zIndex: 20,
+  display: 'flex',
+  alignItems: 'center',
+  gap: vars.space[1],
+  padding: `${vars.space[1]} ${vars.space[1]} ${vars.space[1]} ${vars.space[4]}`,
+  borderRadius: vars.radius.pill,
+  background: vars.color.island,
+  color: vars.color.islandText,
+  boxShadow: vars.shadow.raise,
+  whiteSpace: 'nowrap',
+  '@media': {
+    // По центру остров шире телефона: там он встаёт от края до края.
+    [media.phone]: {
+      left: vars.space[3],
+      right: vars.space[3],
+      transform: 'none',
+      justifyContent: 'space-between',
+      gap: 0,
+      paddingLeft: vars.space[3]
+    }
+  }
+})
+
+/** Высота острова вместе с отступом от края экрана. */
+export const pickedRoom = style({ height: '64px' })
+
+export const pickedCount = style({
+  marginRight: vars.space[2],
+  fontSize: vars.text.sm,
+  fontWeight: 600
+})
+
+export const islandAction = style([
+  press,
+  focusRing,
+  {
+    height: '32px',
+    padding: `0 ${vars.space[3]}`,
+    borderRadius: vars.radius.pill,
+    background: 'transparent',
+    color: vars.color.islandFaint,
+    fontSize: vars.text.sm,
+    fontWeight: 500,
+    '@media': { [media.phone]: { padding: `0 ${vars.space[2]}` } },
+    selectors: {
+      '&:hover': { color: vars.color.islandText }
+    }
+  }
+])

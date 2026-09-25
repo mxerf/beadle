@@ -1,7 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useCallback } from 'react'
 
-import { GroupSwitch } from '../group-switch.tsx'
 import { type Grouping, toGrouping } from '../grouping.ts'
 import { IssueList } from '../issue-list.tsx'
 import { IssuesPane } from '../issues-pane.tsx'
@@ -27,11 +26,10 @@ function ListView() {
   )
 
   return (
-    <>
-      <GroupSwitch value={grouping} onPick={pick} />
-      <IssuesPane>
-        {(issues) => <IssueList issues={issues} grouping={grouping} />}
-      </IssuesPane>
-    </>
+    <IssuesPane>
+      {(issues) => (
+        <IssueList issues={issues} grouping={grouping} onGroup={pick} />
+      )}
+    </IssuesPane>
   )
 }

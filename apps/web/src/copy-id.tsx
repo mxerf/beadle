@@ -1,9 +1,5 @@
-import { useEffect, useState } from 'react'
-
-import { copy } from './copy-id.css.ts'
-
-/** Сколько держится подтверждение: заметить успели, надоесть — ещё нет. */
-const CONFIRM_MS = 1200
+import { useCopy } from './clipboard.ts'
+import { copy as styles } from './copy-id.css.ts'
 
 /**
  * Номер задачи, который копируется нажатием. Стоит во всех видах, где
@@ -17,35 +13,20 @@ export function CopyId({
   id: string
   className?: string | undefined
 }) {
-  const [copied, setCopied] = useState(false)
-
-  useEffect(() => {
-    if (!copied) {
-      return undefined
-    }
-    const timer = setTimeout(() => setCopied(false), CONFIRM_MS)
-    return () => clearTimeout(timer)
-  }, [copied])
+  const { copied, copy } = useCopy()
 
   return (
     <button
       type="button"
       className={
         className
-          ? `${copy[copied ? 'copied' : 'plain']} ${className}`
-          : copy[copied ? 'copied' : 'plain']
+          ? `${styles[copied ? 'copied' : 'plain']} ${className}`
+          : styles[copied ? 'copied' : 'plain']
       }
       // Заголовок, а не подпись рядом: подсказка нужна один раз, а место
       // в строке занимала бы всегда.
       title={copied ? 'Номер скопирован' : 'Скопировать номер'}
-      onClick={() => {
-        // Отказ буфера молчаливый: подтверждения не будет, и это честнее,
-        // чем показать «скопировано» при пустом буфере.
-        void navigator.clipboard.writeText(id).then(
-          () => setCopied(true),
-          () => undefined
-        )
-      }}
+      onClick={() => copy(id)}
     >
       {id}
     </button>

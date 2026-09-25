@@ -1,4 +1,5 @@
 import type { IssueView } from '@beadle/protocol'
+import { useCallback, useState } from 'react'
 
 import {
   plural,
@@ -6,7 +7,10 @@ import {
   priorityTone,
   typeCaption
 } from './captions.ts'
+import { chip } from './chip.css.ts'
+import { useCopy } from './clipboard.ts'
 import { CopyId } from './copy-id.tsx'
+import { GroupSwitch } from './group-switch.tsx'
 import { type Grouping, groupIssues, type IssueGroup } from './grouping.ts'
 import { IssueRoute } from './issue-link.tsx'
 import * as styles from './issue-list.css.ts'
@@ -23,37 +27,138 @@ import * as tag from './tag.css.ts'
  */
 export function IssueList({
   issues,
-  grouping
+  grouping,
+  onGroup
 }: {
   issues: readonly IssueView[]
   grouping?: Grouping | undefined
+  onGroup: (next: Grouping | undefined) => void
 }) {
   const statuses = useStatuses()
+  const [picked, setPicked] = useState<ReadonlySet<string>>(() => new Set())
 
-  if (!grouping) {
-    return (
-      <div className={styles.list}>
-        <Rows issues={issues.toSorted(byImportance)} />
-      </div>
-    )
-  }
+  const groups = grouping
+    ? groupIssues(issues, grouping, statusOrder(statuses, issues))
+    : undefined
+  // Порядок показа — он же порядок номеров в буфере.
+  const shown = groups
+    ? groups.flatMap((group) => group.issues)
+    : issues.toSorted(byImportance)
+  const ids = shown.map((issue) => issue.id)
+  // Выбор держится только за показанное: задача, ушедшая из-под фильтра,
+  // в буфер попасть не должна — человек её уже не видит.
+  const chosen = ids.filter((id) => picked.has(id))
 
-  const groups = groupIssues(issues, grouping, statusOrder(statuses, issues))
+  const pick = useCallback((id: string) => {
+    setPicked((previous) => {
+      const next = new Set(previous)
+      if (next.has(id)) {
+        next.delete(id)
+      } else {
+        next.add(id)
+      }
+      return next
+    })
+  }, [])
 
   return (
-    <div className={styles.islands}>
-      {groups.map((group) => (
-        <section key={group.key} className={styles.list}>
-          <GroupHead group={group} />
-          <Rows issues={group.issues} />
-        </section>
-      ))}
-    </div>
+    <>
+      <div className={styles.toolbar}>
+        <GroupSwitch value={grouping} onPick={onGroup} />
+        <CopyIds ids={ids} caption={`Скопировать номера · ${ids.length}`} />
+      </div>
+      {groups ? (
+        <div className={styles.islands}>
+          {groups.map((group) => (
+            <section key={group.key} className={styles.list}>
+              <GroupHead group={group} />
+              <Rows issues={group.issues} picked={picked} onPick={pick} />
+            </section>
+          ))}
+        </div>
+      ) : (
+        <div className={styles.list}>
+          <Rows issues={shown} picked={picked} onPick={pick} />
+        </div>
+      )}
+      {chosen.length > 0 ? (
+        <Picked ids={chosen} onClear={() => setPicked(new Set())} />
+      ) : null}
+    </>
   )
 }
 
-function Rows({ issues }: { issues: readonly IssueView[] }) {
-  return issues.map((issue) => <IssueRow key={issue.id} issue={issue} />)
+function Rows({
+  issues,
+  picked,
+  onPick
+}: {
+  issues: readonly IssueView[]
+  picked: ReadonlySet<string>
+  onPick: (id: string) => void
+}) {
+  return issues.map((issue) => (
+    <IssueRow
+      key={issue.id}
+      issue={issue}
+      picked={picked.has(issue.id)}
+      onPick={onPick}
+    />
+  ))
+}
+
+/**
+ * Номера через пробел: так их ждёт `bd show a b c`, и так же они
+ * вставляются в сообщение, не превращаясь в столбик.
+ */
+function CopyIds({
+  ids,
+  caption,
+  onIsland = false
+}: {
+  ids: readonly string[]
+  caption: string
+  /** Кнопка стоит на тёмном острове, а не на полотне. */
+  onIsland?: boolean
+}) {
+  const { copied, copy } = useCopy()
+
+  return (
+    <button
+      type="button"
+      className={onIsland ? styles.islandAction : chip[copied ? 'on' : 'off']}
+      onClick={() => copy(ids.join(' '))}
+    >
+      {copied ? 'Скопировано' : caption}
+    </button>
+  )
+}
+
+/**
+ * Выбранное — островом внизу экрана, а не кнопкой над списком: выбирают
+ * по ходу чтения, и к моменту копирования шапка списка давно уехала вверх.
+ */
+function Picked({
+  ids,
+  onClear
+}: {
+  ids: readonly string[]
+  onClear: () => void
+}) {
+  return (
+    <>
+      {/* Место под островом: иначе в конце списка он закрыл бы последние
+          строки, и дотянуться до них было бы нечем. */}
+      <div className={styles.pickedRoom} />
+      <aside className={styles.picked} aria-label="Выбранные задачи">
+        <span className={styles.pickedCount}>Выбрано: {ids.length}</span>
+        <CopyIds ids={ids} caption="Скопировать номера" onIsland />
+        <button type="button" className={styles.islandAction} onClick={onClear}>
+          Снять выбор
+        </button>
+      </aside>
+    </>
+  )
 }
 
 /**
@@ -95,9 +200,24 @@ function GroupHead({ group }: { group: IssueGroup }) {
   )
 }
 
-function IssueRow({ issue }: { issue: IssueView }) {
+function IssueRow({
+  issue,
+  picked,
+  onPick
+}: {
+  issue: IssueView
+  picked: boolean
+  onPick: (id: string) => void
+}) {
   return (
     <div className={styles.row}>
+      <input
+        type="checkbox"
+        className={styles.pick}
+        checked={picked}
+        onChange={() => onPick(issue.id)}
+        aria-label={`Выбрать ${issue.id}`}
+      />
       <IssueRoute id={issue.id} className={styles.rowLink}>
         <span className={tag.tone[priorityTone(issue.priority)]}>
           {priorityCaption(issue.priority)}
