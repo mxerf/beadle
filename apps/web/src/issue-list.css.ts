@@ -1,4 +1,4 @@
-import { style } from '@vanilla-extract/css'
+import { style, styleVariants } from '@vanilla-extract/css'
 
 import { focusRing, lift, media, press, vars } from './theme.css.ts'
 
@@ -44,7 +44,7 @@ export const islands = style({
  */
 export const list = style({
   display: 'grid',
-  gridTemplateColumns: 'auto auto auto minmax(0, 1fr) auto auto auto auto',
+  gridTemplateColumns: 'auto auto auto minmax(0, 1fr) auto auto auto auto auto',
   // Поля те же, что у группы в эпиках: подъём строки со своей тенью должен
   // уместиться внутри карточки, а не свисать с её края.
   padding: `${vars.space[2]} ${vars.space[4]}`,
@@ -52,7 +52,7 @@ export const list = style({
   background: vars.color.card,
   '@media': {
     /*
-     * Восемь колонок в 390 точек не помещаются, и первым схлопывается
+     * Девять колонок в 390 точек не помещаются, и первым схлопывается
      * заголовок: в ширину `minmax(0, 1fr)` он ужимается до нуля, и список
      * показывает всё, кроме того, ради чего его открыли. Поэтому на телефоне
      * строка перестаёт быть строкой таблицы.
@@ -85,6 +85,8 @@ export const row = style([
         selectors: { '&:hover': { background: vars.color.card } }
       },
       [media.phone]: {
+        // Номер и разворот делят одну колонку, один под другим: своя
+        // колонка под шеврон отняла бы ширину у заголовка.
         gridTemplateColumns: 'auto minmax(0, 1fr) auto',
         alignItems: 'start',
         gap: vars.space[2],
@@ -113,7 +115,7 @@ export const pick = style({
 
 /**
  * Ссылка занимает строку целиком, кроме крайних колонок: слева галочка,
- * справа номер, и оба — кнопки. Колонки — та же подсетка, поэтому ячейки
+ * справа номер и разворот, и все они — кнопки. Колонки — та же подсетка, поэтому ячейки
  * остаются на своих местах; собственных полей у ссылки нет, иначе они
  * сдвинули бы дорожки.
  */
@@ -121,7 +123,7 @@ export const rowLink = style([
   focusRing,
   {
     display: 'grid',
-    gridColumn: '2 / -2',
+    gridColumn: '2 / -3',
     gridTemplateColumns: 'subgrid',
     alignItems: 'center',
     gap: vars.space[3],
@@ -134,7 +136,8 @@ export const rowLink = style([
         flexWrap: 'wrap',
         alignItems: 'center',
         gap: vars.space[2],
-        gridColumn: '2'
+        gridColumn: '2',
+        gridRow: 'span 2'
       }
     }
   }
@@ -160,28 +163,103 @@ export const titleCell = style({
   }
 })
 
-export const title = style({
-  minWidth: 0,
-  overflow: 'hidden',
-  textOverflow: 'ellipsis',
-  whiteSpace: 'nowrap',
-  '@media': {
-    // Целая строка под себя и два ряда текста: на телефоне заголовок —
-    // единственное, что читают, и обрывать его многоточием жалко.
-    [media.phone]: {
-      order: -1,
-      flexBasis: '100%',
-      display: '-webkit-box',
-      WebkitBoxOrient: 'vertical',
-      WebkitLineClamp: 2,
-      whiteSpace: 'normal',
-      textOverflow: 'clip',
-      lineHeight: 1.35
+/**
+ * Заголовок свёрнутой строки обрывается многоточием, развёрнутой — виден
+ * целиком: разворот затем и нужен, чтобы дочитать длинный заголовок,
+ * не уходя на страницу задачи.
+ */
+export const title = styleVariants({
+  shut: {
+    minWidth: 0,
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+    '@media': {
+      // Целая строка под себя и два ряда текста: на телефоне заголовок —
+      // единственное, что читают, и обрывать его многоточием жалко.
+      [media.phone]: {
+        order: -1,
+        flexBasis: '100%',
+        display: '-webkit-box',
+        WebkitBoxOrient: 'vertical',
+        WebkitLineClamp: 2,
+        whiteSpace: 'normal',
+        textOverflow: 'clip',
+        lineHeight: 1.35
+      }
+    }
+  },
+  open: {
+    minWidth: 0,
+    overflowWrap: 'anywhere',
+    lineHeight: 1.35,
+    '@media': {
+      [media.phone]: { order: -1, flexBasis: '100%' }
     }
   }
 })
 
 export const closed = style({ color: vars.color.muted })
+
+/** Разворот — тихая круглая кнопка, как переключатель темы в шапке. */
+export const expand = style([
+  press,
+  focusRing,
+  {
+    display: 'grid',
+    placeItems: 'center',
+    width: '28px',
+    height: '28px',
+    borderRadius: vars.radius.pill,
+    background: 'transparent',
+    color: vars.color.faint,
+    '@media': {
+      // Палец в шестнадцать точек не попадает.
+      [media.phone]: {
+        width: '32px',
+        height: '32px',
+        gridColumn: '3',
+        gridRow: '2',
+        justifySelf: 'end'
+      }
+    },
+    selectors: {
+      '&:hover': { background: vars.color.tone, color: vars.color.text }
+    }
+  }
+])
+
+const chevronBase = style({
+  transition: `transform ${vars.motion.quick} ease`
+})
+
+/** Шеврон смотрит вправо у свёрнутой строки и вниз — у развёрнутой. */
+export const chevron = styleVariants({
+  shut: [chevronBase],
+  open: [chevronBase, { transform: 'rotate(90deg)' }]
+})
+
+/**
+ * Развёрнутая часть — второй ряд той же строки, под ссылкой: текст отсюда
+ * выделяют и копируют, а внутри ссылки выделение превращалось бы в переход.
+ */
+export const more = style({
+  gridColumn: '2 / -1',
+  padding: `${vars.space[1]} 0 ${vars.space[2]}`
+})
+
+export const moreTitle = style({
+  marginBottom: vars.space[1],
+  fontSize: vars.text.xs,
+  fontWeight: 600,
+  color: vars.color.muted
+})
+
+export const moreEmpty = style({
+  margin: 0,
+  fontSize: vars.text.sm,
+  color: vars.color.faint
+})
 
 /** Исполнитель — своя колонка: у большинства задач она пустая. */
 export const assignee = style({
@@ -285,6 +363,13 @@ export const picked = style({
       paddingLeft: vars.space[3]
     }
   }
+})
+
+/** Действия со всем показанным: разворот и копирование номеров. */
+export const actions = style({
+  display: 'flex',
+  flexWrap: 'wrap',
+  gap: vars.space[1]
 })
 
 /** Высота острова вместе с отступом от края экрана. */

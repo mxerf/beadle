@@ -14,6 +14,7 @@ import { GroupSwitch } from './group-switch.tsx'
 import { type Grouping, groupIssues, type IssueGroup } from './grouping.ts'
 import { IssueRoute } from './issue-link.tsx'
 import * as styles from './issue-list.css.ts'
+import { Markdown } from './markdown.tsx'
 import { byImportance } from './ordering.ts'
 import { StatusTag } from './status-tag.tsx'
 import { statusOrder, useStatuses } from './statuses.ts'
@@ -36,6 +37,7 @@ export function IssueList({
 }) {
   const statuses = useStatuses()
   const [picked, setPicked] = useState<ReadonlySet<string>>(() => new Set())
+  const [open, setOpen] = useState<ReadonlySet<string>>(() => new Set())
 
   const groups = grouping
     ? groupIssues(issues, grouping, statusOrder(statuses, issues))
@@ -49,36 +51,44 @@ export function IssueList({
   // в буфер попасть не должна — человек её уже не видит.
   const chosen = ids.filter((id) => picked.has(id))
 
-  const pick = useCallback((id: string) => {
-    setPicked((previous) => {
-      const next = new Set(previous)
-      if (next.has(id)) {
-        next.delete(id)
-      } else {
-        next.add(id)
-      }
-      return next
-    })
+  const allOpen = ids.length > 0 && ids.every((id) => open.has(id))
+
+  const onPick = useCallback((id: string) => {
+    setPicked((previous) => toggled(previous, id))
   }, [])
+  const onExpand = useCallback((id: string) => {
+    setOpen((previous) => toggled(previous, id))
+  }, [])
+  const state: RowState = { picked, open, onPick, onExpand }
 
   return (
     <>
       <div className={styles.toolbar}>
         <GroupSwitch value={grouping} onPick={onGroup} />
-        <CopyIds ids={ids} caption={`Скопировать номера · ${ids.length}`} />
+        <div className={styles.actions}>
+          <button
+            type="button"
+            className={chip[allOpen ? 'on' : 'off']}
+            aria-pressed={allOpen}
+            onClick={() => setOpen(allOpen ? new Set() : new Set(ids))}
+          >
+            Развернуть все
+          </button>
+          <CopyIds ids={ids} caption={`Скопировать номера · ${ids.length}`} />
+        </div>
       </div>
       {groups ? (
         <div className={styles.islands}>
           {groups.map((group) => (
             <section key={group.key} className={styles.list}>
               <GroupHead group={group} />
-              <Rows issues={group.issues} picked={picked} onPick={pick} />
+              <Rows issues={group.issues} state={state} />
             </section>
           ))}
         </div>
       ) : (
         <div className={styles.list}>
-          <Rows issues={shown} picked={picked} onPick={pick} />
+          <Rows issues={shown} state={state} />
         </div>
       )}
       {chosen.length > 0 ? (
@@ -88,22 +98,40 @@ export function IssueList({
   )
 }
 
+/** Множество с переключённым значением — для выбора и для разворота строк. */
+function toggled(
+  previous: ReadonlySet<string>,
+  id: string
+): ReadonlySet<string> {
+  const next = new Set(previous)
+  if (next.has(id)) {
+    next.delete(id)
+  } else {
+    next.add(id)
+  }
+  return next
+}
+
+/**
+ * Что человек сделал со строками: отметил и развернул. Живёт в списке,
+ * а не в адресе: это ход чтения, а не состояние экрана, которым делятся.
+ */
+type RowState = {
+  picked: ReadonlySet<string>
+  open: ReadonlySet<string>
+  onPick: (id: string) => void
+  onExpand: (id: string) => void
+}
+
 function Rows({
   issues,
-  picked,
-  onPick
+  state
 }: {
   issues: readonly IssueView[]
-  picked: ReadonlySet<string>
-  onPick: (id: string) => void
+  state: RowState
 }) {
   return issues.map((issue) => (
-    <IssueRow
-      key={issue.id}
-      issue={issue}
-      picked={picked.has(issue.id)}
-      onPick={onPick}
-    />
+    <IssueRow key={issue.id} issue={issue} state={state} />
   ))
 }
 
@@ -200,22 +228,17 @@ function GroupHead({ group }: { group: IssueGroup }) {
   )
 }
 
-function IssueRow({
-  issue,
-  picked,
-  onPick
-}: {
-  issue: IssueView
-  picked: boolean
-  onPick: (id: string) => void
-}) {
+function IssueRow({ issue, state }: { issue: IssueView; state: RowState }) {
+  const open = state.open.has(issue.id)
+  const more = `more-${issue.id}`
+
   return (
     <div className={styles.row}>
       <input
         type="checkbox"
         className={styles.pick}
-        checked={picked}
-        onChange={() => onPick(issue.id)}
+        checked={state.picked.has(issue.id)}
+        onChange={() => state.onPick(issue.id)}
         aria-label={`Выбрать ${issue.id}`}
       />
       <IssueRoute id={issue.id} className={styles.rowLink}>
@@ -225,12 +248,12 @@ function IssueRow({
         <span className={tag.tone.quiet}>{typeCaption[issue.issue_type]}</span>
         <span className={styles.titleCell}>
           <span
-            className={
-              issue.status === 'closed'
-                ? `${styles.title} ${styles.closed}`
-                : styles.title
-            }
-            title={issue.title}
+            className={[
+              styles.title[open ? 'open' : 'shut'],
+              issue.status === 'closed' ? styles.closed : ''
+            ].join(' ')}
+            // Подсказка нужна обрезанному заголовку, развёрнутый виден весь.
+            title={open ? undefined : issue.title}
           >
             {issue.title}
           </span>
@@ -247,6 +270,42 @@ function IssueRow({
         <StatusTag status={issue.status} />
       </IssueRoute>
       <CopyId id={issue.id} className={styles.idCell} />
+      <button
+        type="button"
+        className={styles.expand}
+        aria-expanded={open}
+        aria-controls={more}
+        title={open ? 'Свернуть' : 'Развернуть'}
+        onClick={() => state.onExpand(issue.id)}
+      >
+        <svg {...CHEVRON} className={styles.chevron[open ? 'open' : 'shut']}>
+          <path d="m9 6 6 6-6 6" />
+        </svg>
+      </button>
+      {open ? (
+        <div id={more} className={styles.more}>
+          {issue.acceptance_criteria ? (
+            <>
+              <div className={styles.moreTitle}>Критерии приёмки</div>
+              <Markdown>{issue.acceptance_criteria}</Markdown>
+            </>
+          ) : (
+            <p className={styles.moreEmpty}>Критериев приёмки нет</p>
+          )}
+        </div>
+      ) : null}
     </div>
   )
 }
+
+const CHEVRON = {
+  width: 16,
+  height: 16,
+  viewBox: '0 0 24 24',
+  fill: 'none',
+  stroke: 'currentColor',
+  strokeWidth: 2,
+  strokeLinecap: 'round',
+  strokeLinejoin: 'round',
+  'aria-hidden': true
+} as const
